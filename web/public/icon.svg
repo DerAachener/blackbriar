@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#2a2a2f"/>
+      <stop offset="1" stop-color="#09090b"/>
+    </linearGradient>
+    <linearGradient id="star" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#fde68a"/>
+      <stop offset="1" stop-color="#f59e0b"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="url(#bg)"/>
+  <rect x="3" y="3" width="506" height="506" rx="109" fill="none" stroke="#3f3f46" stroke-width="6"/>
+  <!-- Zielkreis mit vier Marken: Blackbriar behält im Blick, wer was schaut -->
+  <g fill="none" stroke="#fbbf24" stroke-opacity="0.38" stroke-width="9" stroke-linecap="round">
+    <circle cx="256" cy="256" r="188"/>
+    <path d="M256 68v30M256 414v30M68 256h30M414 256h30"/>
+  </g>
+  <path d="M256 128 288.9 210.7 377.7 216.4 309.3 273.3 331.2 359.6 256 312 180.8 359.6 202.7 273.3 134.3 216.4 223.1 210.7Z"
+        fill="url(#star)" stroke="url(#star)" stroke-width="16" stroke-linejoin="round"/>
+</svg>

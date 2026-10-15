@@ -1,0 +1,89 @@
+name: Docker-Image bauen
+
+# Jeder Push auf main baut das Image :dev, zum Testen.
+# Ein Tag der Form v0.12.5 gibt die Fassung frei: Image :0.12.5, :0.12 und :latest, dazu ein Release
+# auf GitHub mit dem Abschnitt aus CHANGELOG.md.
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
+    env:
+      RELEASE: ${{ startsWith(github.ref, 'refs/tags/v') }}
+    steps:
+      # Mit allen Tags, damit das Release weiß, welche Fassung zuletzt freigegeben wurde
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Tag und Versionsnummer müssen zusammenpassen
+        if: env.RELEASE == 'true'
+        run: test "v$(node -p "require('./package.json').version")" = "$GITHUB_REF_NAME"
+
+      - run: npm ci
+      - run: npm run typecheck
+
+      # Für das ARM-Image einer freigegebenen Fassung
+      - uses: docker/setup-qemu-action@v3
+        if: env.RELEASE == 'true'
+
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository }}
+          flavor: latest=false
+          tags: |
+            type=raw,value=dev,enable=${{ env.RELEASE != 'true' }}
+            type=sha,enable=${{ env.RELEASE != 'true' }}
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=raw,value=latest,enable=${{ env.RELEASE == 'true' }}
+
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          platforms: ${{ env.RELEASE == 'true' && 'linux/amd64,linux/arm64' || 'linux/amd64' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          build-args: |
+            GIT_SHA=${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Release auf GitHub anlegen
+        if: env.RELEASE == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          # Alles seit der letzten freigegebenen Fassung, nicht nur der oberste Abschnitt
+          prev="$(git describe --tags --abbrev=0 --match 'v*' "${GITHUB_REF_NAME}^" 2>/dev/null || true)"
+          prev="${prev#v}"
+          awk -v from="## bb.$version " -v to="## bb.$prev " -v single="${prev:+no}" '
+            index($0, from) == 1 { on = 1; print; next }
+            on && single == "no" && index($0, to) == 1 { exit }
+            on && single != "no" && /^## / { exit }
+            on
+          ' CHANGELOG.md > notes.md
+          gh release create "$GITHUB_REF_NAME" --title "bb.$version" --notes-file notes.md

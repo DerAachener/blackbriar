@@ -1,0 +1,24 @@
+name: Idea or wish
+description: Something Blackbriar should be able to do
+labels: [enhancement]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        German or English are both fine. Blackbriar is a hobby project, so not every wish can be built, but every one is read.
+  - type: textarea
+    id: problem
+    attributes:
+      label: What do you want to do?
+      description: Describe the situation on your server, not only the feature. That makes it easier to find a good solution.
+    validations:
+      required: true
+  - type: textarea
+    id: idea
+    attributes:
+      label: How could Blackbriar help?
+  - type: textarea
+    id: setup
+    attributes:
+      label: Your setup
+      description: Roughly how many users, which services are connected, anything unusual.

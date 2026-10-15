@@ -1,0 +1,35 @@
+{
+  "name": "blackbriar",
+  "version": "0.18.3",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "dev:server": "node --env-file-if-exists=.env --watch server/index.ts",
+    "dev:web": "vite",
+    "build": "vite build",
+    "start": "node --env-file-if-exists=.env server/index.ts",
+    "typecheck": "tsc -p server && tsc -p web"
+  },
+  "dependencies": {
+    "@fastify/static": "^10.1.5",
+    "fastify": "^5.12.5",
+    "nodemailer": "^10.0.14"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.3.3",
+    "@types/node": "^26.6.3",
+    "@types/nodemailer": "^8.0.2",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-react": "^6.1.1",
+    "lucide-react": "^1.49.0",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0",
+    "tailwindcss": "^4.3.3",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.2"
+  }
+}

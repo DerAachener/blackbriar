@@ -1,0 +1,53 @@
+name: Bug report
+description: Something does not work as it should
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time. German or English are both fine.
+        Please remove tokens, API keys, email addresses and user names from anything you paste.
+  - type: input
+    id: version
+    attributes:
+      label: Blackbriar version
+      description: Shown at the bottom of the sidebar, for example bb.0.14.0
+    validations:
+      required: true
+  - type: dropdown
+    id: install
+    attributes:
+      label: How do you run it?
+      options:
+        - Docker Compose
+        - docker run
+        - TrueNAS
+        - Unraid
+        - Synology / QNAP
+        - Other
+    validations:
+      required: true
+  - type: checkboxes
+    id: services
+    attributes:
+      label: Connected services
+      options:
+        - label: Seerr
+        - label: Radarr
+        - label: Sonarr
+        - label: TMDB
+        - label: Telegram
+        - label: Email
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      description: What did you do, what did you expect, what did you see instead?
+    validations:
+      required: true
+  - type: textarea
+    id: log
+    attributes:
+      label: Log
+      description: Lines from Settings → Log or from the container log, if there are any. Screenshots help too.
+      render: text
