@@ -3,7 +3,11 @@
 [English version](CHANGELOG.md)
 
 Was sich in Blackbriar geändert hat, neueste Fassung zuerst.
-Bis zur Freigabe zählt die mittlere Zahl neue Funktionen, die letzte Korrekturen dazwischen.
+Die erste Zahl ändert sich bei größeren Umbauten, auf die man beim Update achten muss, die mittlere bei neuen Funktionen, die letzte bei Korrekturen.
+
+## bb.1.0.0 – 16.10.2026
+
+- Erste öffentliche Freigabe. An der App ändert sich gegenüber bb.0.19.2 nichts.
 
 ## bb.0.19.2 – 16.10.2026
 

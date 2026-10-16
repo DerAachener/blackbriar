@@ -3,7 +3,11 @@
 [Deutsche Fassung](CHANGELOG.de.md)
 
 What changed in Blackbriar, newest version first.
-Until the 1.0 release, the middle number counts new features and the last one counts fixes in between.
+The first number changes with larger changes that need attention when updating, the middle one with new features, the last one with fixes.
+
+## bb.1.0.0 – 2026-10-16
+
+- First public release. No changes to the app compared to bb.0.19.2.
 
 ## bb.0.19.2 – 2026-10-16
 
