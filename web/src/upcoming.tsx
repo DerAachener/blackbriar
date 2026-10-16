@@ -2,7 +2,7 @@ import { useEffect, useState, type ReactNode } from 'react'
 import { ExternalLink, EyeOff, Play, Plus, RefreshCw, X } from 'lucide-react'
 import { api, useApi, type CalendarEntry, type HiddenTitle, type Release, type TitleDetails, type Upcoming } from './api'
 import { locale, t } from './i18n'
-import { ago, Badge, Card, Empty, episodeCode, ErrorNote, meta, num, Poster, typeLabel, Chips } from './ui'
+import { ago, Badge, Card, Empty, episodeCode, ErrorNote, meta, num, Poster, typeLabel, Chips, readFlag, writeFlag } from './ui'
 import { CHANGED } from './titleinfo'
 import { TopicsSection } from './topics'
 import { Heading, TileGrid } from './views'
@@ -427,6 +427,8 @@ export function UpcomingView({ seerrConfigured }: { seerrConfigured: boolean }) 
   const [kind, setKind] = useState<'' | 'movie' | 'show'>('')
   // Nur Dokumentationen; die Angabe kommt von TMDB und fehlt im Kalender von Radarr und Sonarr
   const [docs, setDocs] = useState(false)
+  // Titel, die schon auf dem Server liegen, ausblenden; bleibt im Browser gespeichert
+  const [missingOnly, setMissingOnly] = useState(() => readFlag('upcoming-missing-only'))
   const [showHidden, setShowHidden] = useState(false)
   const [info, setInfo] = useState<InfoTarget | null>(null)
 
@@ -435,7 +437,8 @@ export function UpcomingView({ seerrConfigured }: { seerrConfigured: boolean }) 
   const inPeriod = <T extends { date: string }>(items: T[]) =>
     period === 'ahead' ? items.filter((i) => i.date >= data.today) : items.filter((i) => i.date < data.today).reverse()
   const ofKind = <T extends { type: 'movie' | 'show' }>(items: T[]) => (kind ? items.filter((i) => i.type === kind) : items)
-  const onlyDocs = <T extends { documentary?: boolean }>(items: T[]) => (docs ? items.filter((i) => i.documentary) : items)
+  const onlyDocs = <T extends { documentary?: boolean; in_library: boolean }>(items: T[]) =>
+    (docs ? items.filter((i) => i.documentary) : items).filter((i) => !missingOnly || !i.in_library)
   const selected = data.providers.map((p) => p.name)
   // Filme, deren Anbieter vor dem Start noch nicht feststeht, gehören nur unter „Alle Anbieter“
   const streaming = onlyDocs(ofKind(inPeriod(data.streaming))).filter((r) =>
@@ -460,6 +463,20 @@ export function UpcomingView({ seerrConfigured }: { seerrConfigured: boolean }) 
             <label className="flex cursor-pointer items-center gap-2 text-sm text-zinc-400">
               <input type="checkbox" checked={docs} onChange={(e) => setDocs(e.target.checked)} className="h-4 w-4 accent-amber-400" />
               {t('Nur Dokus')}
+            </label>
+          )}
+          {section !== 'server' && section !== 'topics' && (
+            <label className="flex cursor-pointer items-center gap-2 text-sm text-zinc-400">
+              <input
+                type="checkbox"
+                checked={missingOnly}
+                onChange={(e) => {
+                  setMissingOnly(e.target.checked)
+                  writeFlag('upcoming-missing-only', e.target.checked)
+                }}
+                className="h-4 w-4 accent-amber-400"
+              />
+              {t('Schon auf dem Server ausblenden')}
             </label>
           )}
           {section !== 'cinema' && (

@@ -132,6 +132,22 @@ export function Chips<T extends string>({ value, options, onChange }: { value: T
 /** Zahl mit den Tausendertrennzeichen der gewählten Sprache. */
 export const num = (n: number) => n.toLocaleString(locale())
 
+/** Kleine Merker im Browser, etwa für Häkchen. Ohne Speicher (privates Fenster) gilt der Standard. */
+export function readFlag(name: string): boolean {
+  try {
+    return localStorage.getItem(name) === '1'
+  } catch {
+    return false
+  }
+}
+export function writeFlag(name: string, on: boolean): void {
+  try {
+    localStorage.setItem(name, on ? '1' : '0')
+  } catch {
+    // nicht speicherbar, gilt dann nur bis zum Neuladen
+  }
+}
+
 /**
  * Dateiangaben einer Serie: Haben die Folgen verschiedene Werte, liefert der Server alle, durch Komma getrennt.
  * Bis drei werden genannt, darüber steht „gemischt“.

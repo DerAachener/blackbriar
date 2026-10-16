@@ -5,6 +5,10 @@
 Was sich in Blackbriar geändert hat, neueste Fassung zuerst.
 Bis zur Freigabe zählt die mittlere Zahl neue Funktionen, die letzte Korrekturen dazwischen.
 
+## bb.0.19.0 – 16.10.2026
+
+- Was kommt: neues Häkchen „Schon auf dem Server ausblenden“ bei Streaming und Kino, wie schon unter „Meine Themen“. Übrig bleiben nur Titel, die noch fehlen. Die Wahl gilt für alle drei und bleibt im Browser gespeichert.
+
 ## bb.0.18.5 – 16.10.2026
 
 - Einstellungen → Plex, Radarr und Sonarr: „Neuen Schlüssel erzeugen“ ersetzt den Schlüssel in den Webhook-Adressen, etwa wenn eine Adresse auf einem Bildschirmfoto zu sehen war. Die alten Adressen gelten sofort nicht mehr; die neuen müssen in Plex, Radarr und Sonarr eingetragen werden.

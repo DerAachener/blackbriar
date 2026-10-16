@@ -5,6 +5,10 @@
 What changed in Blackbriar, newest version first.
 Until the 1.0 release, the middle number counts new features and the last one counts fixes in between.
 
+## bb.0.19.0 – 2026-10-16
+
+- Coming up: new checkbox "Hide what is already on the server" for streaming and cinema, as already in "My topics". Only titles you do not have yet remain. The choice applies to all three and is remembered in the browser.
+
 ## bb.0.18.5 – 2026-10-16
 
 - Settings → Plex, Radarr and Sonarr: "Create new key" replaces the key in the webhook addresses, for example when an address showed up on a screenshot. The old addresses stop working at once; the new ones have to be entered in Plex, Radarr and Sonarr.

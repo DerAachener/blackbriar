@@ -3,7 +3,7 @@ import { Pencil, Plus, RefreshCw, Trash2, X } from 'lucide-react'
 import { api, useApi, type Keyword, type Release, type Topic, type TopicTitles } from './api'
 import { locale, t } from './i18n'
 import { CHANGED } from './titleinfo'
-import { ago, Button, Card, Empty, ErrorNote, meta, num } from './ui'
+import { ago, Button, Card, Empty, ErrorNote, meta, num, readFlag, writeFlag } from './ui'
 import { TileGrid } from './views'
 
 const json = (method: string, body?: unknown): RequestInit => ({
@@ -126,7 +126,8 @@ export function TopicsSection({ kind, providers, row }: { kind: '' | 'movie' | '
   const [error, setError] = useState('')
   const [sort, setSort] = useState<Sort>('popular')
   const [mine, setMine] = useState(false)
-  const [hideOwned, setHideOwned] = useState(false)
+  // Gleicher Merker wie bei Streaming und Kino: eine Wahl für ganz „Was kommt“
+  const [hideOwned, setHideOwned] = useState(() => readFlag('upcoming-missing-only'))
   const [shown, setShown] = useState(60)
 
   const topics = list.data?.topics ?? []
@@ -255,7 +256,10 @@ export function TopicsSection({ kind, providers, row }: { kind: '' | 'movie' | '
                 {t('Nur bei meinen Anbietern')}
               </label>
               <label className="flex cursor-pointer items-center gap-2 text-sm text-zinc-400">
-                <input type="checkbox" checked={hideOwned} onChange={(e) => setHideOwned(e.target.checked)} className="h-4 w-4 accent-amber-400" />
+                <input type="checkbox" checked={hideOwned} onChange={(e) => {
+                    setHideOwned(e.target.checked)
+                    writeFlag('upcoming-missing-only', e.target.checked)
+                  }} className="h-4 w-4 accent-amber-400" />
                 {t('Schon auf dem Server ausblenden')}
               </label>
               <select value={sort} onChange={(e) => setSort(e.target.value as Sort)} className={selectClass} aria-label={t('Sortierung')}>
