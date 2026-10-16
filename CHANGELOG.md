@@ -5,6 +5,11 @@
 What changed in Blackbriar, newest version first.
 Until the 1.0 release, the middle number counts new features and the last one counts fixes in between.
 
+## bb.0.19.1 – 2026-10-16
+
+- "Project page" in the sidebar and under Settings → Status now opens the repository on GitHub. The old project page is gone.
+- The repository has a "Sponsor" button that leads to Buy Me a Coffee.
+
 ## bb.0.19.0 – 2026-10-16
 
 - Coming up: new checkbox "Hide what is already on the server" for streaming and cinema, as already in "My topics". Only titles you do not have yet remain. The choice applies to all three and is remembered in the browser.

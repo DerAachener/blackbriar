@@ -3,8 +3,8 @@ import { Film } from 'lucide-react'
 import { locale, t } from './i18n'
 
 /** `thumb` ist ein Plex-Pfad; `tmdbPoster` der Ersatz für Titel, die nicht auf dem Server liegen. */
-/** Die Projektseite von Blackbriar mit Beschreibung und Neuigkeiten */
-export const PROJECT_URL = 'https://apps.der-aachener.de/'
+/** Die Projektseite von Blackbriar: das Repo auf GitHub mit README, Releases und Issues */
+export const PROJECT_URL = 'https://github.com/DerAachener/blackbriar'
 
 export function Poster({
   thumb,

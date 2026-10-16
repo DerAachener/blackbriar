@@ -6,7 +6,7 @@
 
 Blackbriar shows who watches and rates what on your Plex server and tells you what can be deleted. Your users get an email when something new has arrived.
 
-[Deutsche Fassung](README.de.md) · [Project page](https://apps.der-aachener.de/) · [Changelog](CHANGELOG.md)
+[Deutsche Fassung](README.de.md) · [Changelog](CHANGELOG.md)
 
 ![Dashboard with a live session, open ratings, cleanup and free space](docs/screenshots/dashboard.png)
 

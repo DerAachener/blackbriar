@@ -6,7 +6,7 @@
 
 Blackbriar zeigt, wer auf deinem Plex-Server was schaut und bewertet, und sagt dir, was weg kann. Deine Benutzer bekommen eine Mail, wenn etwas Neues da ist.
 
-[English version](README.md) · [Projektseite](https://apps.der-aachener.de/) · [Änderungsverlauf](CHANGELOG.de.md)
+[English version](README.md) · [Änderungsverlauf](CHANGELOG.de.md)
 
 ![Dashboard mit laufender Wiedergabe, offenen Bewertungen, „Kann weg“ und freiem Speicher](docs/screenshots/dashboard.png)
 
