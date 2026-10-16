@@ -3,6 +3,10 @@
 Was sich in Blackbriar geändert hat, neueste Fassung zuerst.
 Bis zur Freigabe zählt die mittlere Zahl neue Funktionen, die letzte Korrekturen dazwischen.
 
+## bb.0.18.4 – 16.10.2026
+
+- Hinweise unter „Im Blick behalten“ stehen jetzt immer in der eingestellten Sprache. Bisher blieben sie in der Sprache, in der sie entstanden waren, auch nach einem Wechsel. Ältere Hinweise zu Release-Gruppen werden beim nächsten Abgleich umgestellt.
+
 ## bb.0.18.3 – 15.10.2026
 
 - Fremde Webseiten können nichts mehr an Blackbriar schicken. Bisher hätte eine präparierte Seite, die man im selben Browser öffnet, im Hintergrund etwa einen Löschauftrag auslösen können, solange man angemeldet war. Webhooks von Plex, Radarr und Sonarr sind davon nicht betroffen.

@@ -24,6 +24,34 @@ db.exec(`CREATE TABLE IF NOT EXISTS notices (
   state      TEXT NOT NULL DEFAULT 'open'
 )`)
 
+// Seit bb.0.18.4: die Zahlen hinter dem Hinweis als JSON. Der Satz entsteht beim Anzeigen in der eingestellten Sprache;
+// `detail` hält nur noch die Fassung von damals, für Hinweise ohne diese Angaben.
+if (!db.prepare('PRAGMA table_info(notices)').all().some((c) => c.name === 'data')) {
+  db.exec('ALTER TABLE notices ADD COLUMN data TEXT')
+  // „Staffel komplett“ von früher: Die Folgenzahl steht im gespeicherten Satz
+  for (const n of db.prepare("SELECT id, detail FROM notices WHERE kind = 'complete'").all()) {
+    const total = Number(/\d+/.exec(String(n.detail))?.[0])
+    if (total) db.prepare('UPDATE notices SET data = ? WHERE id = ?').run(JSON.stringify({ total }), n.id)
+  }
+}
+
+type NoticeData = { total: number } | { groups: [string, number[]][]; main: string | null; count: number }
+
+/** Der Satz zu einem Hinweis, in der gerade eingestellten Sprache. */
+function noticeText(data: NoticeData): string {
+  if ('total' in data) return t('Alle {n} Folgen sind da. Soll die Staffel in Sonarr auf „nicht beobachtet“?', { n: data.total })
+  const parts = data.groups.map(([group, episodes]) =>
+    t(episodes.length === 1 ? 'Folge {episodes} ist von {group}' : 'Folgen {episodes} sind von {group}', { episodes: episodeList(episodes), group }),
+  )
+  return data.main ? `${parts.join('; ')}. ${t('Die übrigen {n} sind von {group}.', { n: data.count, group: data.main })}` : `${parts.join('; ')}. ${t('Eine Mehrheit gibt es noch nicht.')}`
+}
+
+function groupData(mix: { main: string | null; count: number; outliers: Outlier[] }): NoticeData {
+  const byGroup = new Map<string, number[]>()
+  for (const o of mix.outliers) byGroup.set(o.group, [...(byGroup.get(o.group) ?? []), o.episode])
+  return { groups: [...byGroup], main: mix.main, count: mix.count }
+}
+
 // So weit zurück gelten Folgen als „gerade angekommen“
 const WINDOW = 7 * 86400
 
@@ -92,7 +120,9 @@ export async function checkSeasons(): Promise<void> {
   const tmdbOf = db.prepare('SELECT tmdb_id FROM library_items WHERE rating_key = ?')
   const lastOnServer = db.prepare('SELECT MAX(episode) AS last FROM media_files WHERE item_key = ? AND rating_key <> item_key AND season = ?')
   const exists = db.prepare('SELECT state FROM notices WHERE key = ?')
-  const insert = db.prepare('INSERT OR IGNORE INTO notices (key, kind, rating_key, season, title, detail, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)')
+  const insert = db.prepare('INSERT OR IGNORE INTO notices (key, kind, rating_key, season, title, detail, data, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)')
+  // Hinweise zu Release-Gruppen von vor bb.0.18.4 bekommen ihre Zahlen beim nächsten Durchlauf nachgetragen
+  const fillData = db.prepare("UPDATE notices SET data = ? WHERE key = ? AND data IS NULL AND state = 'open'")
   const sonarrCache = new Map<number, Awaited<ReturnType<typeof getSeriesFiles>> | null>()
 
   for (const s of seasons.values()) {
@@ -113,14 +143,13 @@ export async function checkSeasons(): Promise<void> {
     if (mix?.outliers.length) {
       // Der Schlüssel enthält die abweichenden Folgen: Kommt eine weitere dazu, ist das ein neuer Hinweis
       const key = groupKeyPrefix + mix.outliers.map((o) => `${o.episode}=${o.group.toLowerCase()}`).join(',')
-      if (!exists.get(key)) {
-        const byGroup = new Map<string, number[]>()
-        for (const o of mix.outliers) byGroup.set(o.group, [...(byGroup.get(o.group) ?? []), o.episode])
-        const parts = [...byGroup].map(([group, episodes]) => t(episodes.length === 1 ? 'Folge {episodes} ist von {group}' : 'Folgen {episodes} sind von {group}', { episodes: episodeList(episodes), group }))
-        const detail = mix.main ? `${parts.join('; ')}. ${t('Die übrigen {n} sind von {group}.', { n: mix.count, group: mix.main })}` : `${parts.join('; ')}. ${t('Eine Mehrheit gibt es noch nicht.')}`
+      const data = groupData(mix)
+      if (exists.get(key)) fillData.run(JSON.stringify(data), key)
+      else {
+        const detail = noticeText(data)
         // Ältere Fassungen desselben Hinweises ablösen
         db.prepare("UPDATE notices SET state = 'done' WHERE kind = 'groups' AND rating_key = ? AND season = ? AND state = 'open'").run(s.rating_key, s.season)
-        insert.run(key, 'groups', s.rating_key, s.season, item.title, detail, now())
+        insert.run(key, 'groups', s.rating_key, s.season, item.title, detail, JSON.stringify(data), now())
         logEvent('sync', `${item.title} · ${seasonName}: ${detail}`, 'warn')
         await announce(`⚠️ <b>${escapeHtml(item.title)}</b> · ${escapeHtml(seasonName)}: ${escapeHtml(t('gemischte Release-Gruppen'))}\n${escapeHtml(detail)}`, item.thumb, first)
       }
@@ -138,8 +167,8 @@ export async function checkSeasons(): Promise<void> {
     if (!plan || total === 0 || last < total || plan.airing === s.season) continue
     const key = `complete:${s.rating_key}:${s.season}`
     if (exists.get(key)) continue
-    const detail = t('Alle {n} Folgen sind da. Soll die Staffel in Sonarr auf „nicht beobachtet“?', { n: total })
-    insert.run(key, 'complete', s.rating_key, s.season, item.title, detail, now())
+    const data: NoticeData = { total }
+    insert.run(key, 'complete', s.rating_key, s.season, item.title, noticeText(data), JSON.stringify(data), now())
     logEvent('sync', t('{title} · {season} ist komplett', { title: item.title, season: seasonName }))
     await announce(
       `📦 <b>${escapeHtml(item.title)}</b> · ${escapeHtml(t('{season} ist komplett', { season: seasonName }))}\n${escapeHtml(t('In Blackbriar kannst du sie in Sonarr auf „nicht beobachtet“ setzen.'))}`,
@@ -166,13 +195,15 @@ export interface Notice {
 export function openNotices(): Notice[] {
   const library = new Map(fileList().map((f) => [f.rating_key, f]))
   return db
-    .prepare("SELECT id, kind, rating_key, season, title, detail, created_at FROM notices WHERE state = 'open' ORDER BY id DESC")
+    .prepare("SELECT id, kind, rating_key, season, title, detail, data, created_at FROM notices WHERE state = 'open' ORDER BY id DESC")
     .all()
     .map((n) => {
       const item = library.get(n.rating_key as number)
       const entry = item?.arr.find((a) => arrInstance(a.instance)?.app === 'sonarr')
       const slug = entry ? (db.prepare('SELECT slug FROM arr_titles WHERE instance = ? AND id = ?').get(entry.instance, entry.id)?.slug as string | null) : null
-      return { ...(n as unknown as Notice), thumb: item?.thumb ?? null, url: entry ? arrLink(arrInstance(entry.instance)!, { slug }) : null }
+      const { data, ...rest } = n as unknown as Notice & { data: string | null }
+      const detail = data ? noticeText(JSON.parse(data) as NoticeData) : rest.detail
+      return { ...rest, detail, thumb: item?.thumb ?? null, url: entry ? arrLink(arrInstance(entry.instance)!, { slug }) : null }
     })
 }
 
