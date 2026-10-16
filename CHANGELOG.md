@@ -5,6 +5,14 @@
 What changed in Blackbriar, newest version first.
 Until the 1.0 release, the middle number counts new features and the last one counts fixes in between.
 
+## bb.0.19.2 – 2026-10-16
+
+- README: the example version tags now exist (`:0.19.1`, `:0.19`), with a link to all releases. The old examples pointed to tags that are gone.
+- README: `docker run` uses `"$(pwd)/data:/data"`, which also works with Docker versions older than 23.
+- `docker-compose.yml` in the repository matches the README example and has English comments.
+- An error that nothing else catches is now written to the log instead of stopping the container.
+- Local image builds leave out all `.env.*` files.
+
 ## bb.0.19.1 – 2026-10-16
 
 - "Project page" in the sidebar and under Settings → Status now opens the repository on GitHub. The old project page is gone.

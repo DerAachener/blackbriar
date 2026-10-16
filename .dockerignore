@@ -2,5 +2,6 @@ node_modules
 web/dist
 data
 .env
+.env.*
 .git
 .github

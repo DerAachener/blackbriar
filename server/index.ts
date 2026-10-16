@@ -16,6 +16,11 @@ import { maybeSendWishMails } from './wish.ts'
 import { maybeBackup } from './backup.ts'
 import { t } from './i18n.ts'
 
+// Letztes Sicherheitsnetz: Ein Fehler, den keine Stelle abfängt, landet im Protokoll, statt den Container zu beenden
+process.on('unhandledRejection', (reason) => {
+  console.error(t('Unerwarteter Fehler:'), reason instanceof Error ? reason.message : String(reason))
+})
+
 const app = Fastify({ logger: { level: 'warn' }, bodyLimit: 10 * 1024 * 1024 })
 
 // Plex-Webhooks kommen als multipart/form-data (teils mit Poster). Gebraucht wird nur die Art des Ereignisses;

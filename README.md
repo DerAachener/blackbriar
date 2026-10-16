@@ -116,7 +116,7 @@ docker compose up -d
 Without Compose, the same as one command:
 
 ```bash
-docker run -d --name blackbriar --restart unless-stopped -p 8787:8787 -e TZ=Europe/Berlin -v ./data:/data ghcr.io/deraachener/blackbriar:latest
+docker run -d --name blackbriar --restart unless-stopped -p 8787:8787 -e TZ=Europe/Berlin -v "$(pwd)/data:/data" ghcr.io/deraachener/blackbriar:latest
 ```
 
 On TrueNAS, paste the YAML above under Apps → Discover → Install via YAML and point the volume to a dataset of your own. The folder has to exist already, TrueNAS does not create it. With `user: "568:568"`, the `apps` user of TrueNAS, create it like this:
@@ -133,7 +133,7 @@ This applies everywhere: if you set `user:`, give that user the data folder, oth
 
 If port 8787 is taken, change the left number under `ports`, for example `"8790:8787"`.
 
-`:latest` is the newest released version. To stay on a fixed version, use a tag like `:0.12.5`, or `:0.12` for the newest fix of that line. Images are built for amd64 and arm64.
+`:latest` is the newest released version. To stay on a fixed version, use a tag like `:0.19.1`, or `:0.19` for the newest fix of that line. All versions are listed under [Releases](../../releases). Images are built for amd64 and arm64.
 
 1. Open `http://<your-server>:8787`. The first time, Blackbriar asks for a setup code. You find it in the container log (`docker logs blackbriar`, on TrueNAS under “Logs” of the app). Then sign in with the Plex account that owns the server, or create your own account with user name and password. In that case you connect Plex afterwards with one click under Settings → Plex. From now on only this Plex account and your password get in.
 2. Under Settings → Plex, pick your server from the list.

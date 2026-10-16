@@ -1,22 +1,17 @@
-# Vorlage für TrueNAS (Apps → Discover → Install via YAML) oder jedes andere Docker-System.
-# Den Pfad links bei "volumes" an ein eigenes Dataset anpassen. Die Verbindungen kannst du hier
-# eintragen oder leer lassen und nach dem Start in der Oberfläche unter Einstellungen setzen.
+# Example for Docker Compose, the same as in the README.
+# On TrueNAS (Apps → Discover → Install via YAML), point the volume to a folder of your own and add
+# "pull_policy: always" below image, so that a restart fetches new versions.
+# All connections are set later in the web interface under Settings; environment variables are optional, see .env.example.
 services:
   blackbriar:
     image: ghcr.io/deraachener/blackbriar:latest
     container_name: blackbriar
     restart: unless-stopped
-    # Optional: nicht als Root laufen (auf TrueNAS "568:568"). Der Datenordner muss dann diesem Benutzer gehören.
+    # Optional: do not run as root (TrueNAS: "568:568"). The data folder must then belong to this user.
     # user: "1000:1000"
     ports:
       - "8787:8787"
     environment:
-      PLEX_URL: http://192.168.1.10:32400
-      PLEX_TOKEN: ""
-      TELEGRAM_BOT_TOKEN: ""
-      TELEGRAM_CHAT_ID: ""
-      SEERR_URL: http://192.168.1.10:5055
-      SEERR_API_KEY: ""
       TZ: Europe/Berlin
     volumes:
-      - /mnt/POOL/apps/blackbriar:/data
+      - ./data:/data

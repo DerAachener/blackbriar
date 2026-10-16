@@ -150,6 +150,7 @@ const en: Record<string, string> = {
   'Das bisherige Passwort stimmt nicht.': 'The current password is wrong.',
   'Passwort geändert': 'Password changed',
   'Anfrage von einer fremden Seite abgelehnt.': 'Request from another site refused.',
+  'Unerwarteter Fehler:': 'Unexpected error:',
   'Neuer Schlüssel für die Webhooks erzeugt ({user})': 'New key for the webhooks created ({user})',
   'Auf {n} anderen Geräten abgemeldet': 'Signed out on {n} other devices',
   'AUTH_RESET=1: Das Konto mit Passwort und alle Anmeldungen sind gelöscht. Nimm die Variable wieder heraus, sonst passiert das bei jedem Start.':
