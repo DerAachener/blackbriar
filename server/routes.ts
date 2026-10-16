@@ -14,7 +14,7 @@ import {
   tracearrConfigured,
   mailConfigured,
 } from './config.ts'
-import { authEnabled, currentUser, webhookKey } from './auth.ts'
+import { authEnabled, currentUser, newWebhookKey, webhookKey } from './auth.ts'
 import { deleteMedia, recentDeletions } from './delete.ts'
 import { testTracearr } from './tracearr.ts'
 import { importStatus, startImport } from './import.ts'
@@ -686,6 +686,13 @@ export function registerRoutes(app: FastifyInstance): void {
 
   // Radarr und Sonarr melden hier Änderungen (Settings → Connect → Webhook): importiert, ausgetauscht, hinzugefügt, gelöscht.
   // Der Inhalt wird nicht ausgewertet; jede Meldung heißt nur: Daten neu lesen.
+  // Nicht unter /api/webhook/: Das hier braucht die Anmeldung
+  app.post('/api/settings/webhook-key', (req) => {
+    newWebhookKey()
+    logEvent('settings', t('Neuer Schlüssel für die Webhooks erzeugt ({user})', { user: currentUser(req) }))
+    return { ok: true }
+  })
+
   app.post('/api/webhook/arr', (req, reply) => {
     if (authEnabled() && (req.query as Query).key !== webhookKey()) return reply.code(403).send({ error: t('Falscher Schlüssel') })
     // Beim Speichern schicken beide eine Testmeldung; die braucht nur eine Antwort

@@ -307,6 +307,32 @@ function PlexConnect() {
   )
 }
 
+/** Neuer Schlüssel für alle Webhook-Adressen. Danach gelten die alten Adressen in Plex, Radarr und Sonarr nicht mehr. */
+function NewWebhookKey({ onDone }: { onDone: () => void }) {
+  const [note, setNote] = useState<NoteState>()
+  const renew = () => {
+    if (!confirm(t('Neuen Schlüssel erzeugen? Die bisherigen Adressen in Plex, Radarr und Sonarr funktionieren danach nicht mehr; du musst dort die neuen eintragen.'))) return
+    api('/settings/webhook-key', json('POST', {}))
+      .then(() => {
+        onDone()
+        setNote({ text: t('Neuer Schlüssel erzeugt. Trag die neuen Adressen in Plex, Radarr und Sonarr ein.'), ok: true })
+      })
+      .catch((e: Error) => setNote({ text: e.message, ok: false }))
+  }
+  return (
+    <div className="flex flex-wrap items-center gap-3 pt-1">
+      <Button onClick={renew}>
+        <RefreshCw size={15} /> {t('Neuen Schlüssel erzeugen')}
+      </Button>
+      {note ? (
+        <span className={`text-xs ${note.ok ? 'text-emerald-400' : 'text-red-400'}`}>{note.text}</span>
+      ) : (
+        <span className="text-xs text-zinc-500">{t('Gilt für alle Webhooks. Nötig, wenn eine Adresse in fremde Hände geraten ist, etwa auf einem Bildschirmfoto.')}</span>
+      )}
+    </div>
+  )
+}
+
 /** Sucht die eigenen Plex-Server über plex.tv, damit die Adresse nicht von Hand eingetragen werden muss. */
 // Bei der Einrichtung (Token da, Adresse fehlt) steht die Auswahl oben und sucht von selbst; später ist sie ein Knopf unter dem Formular.
 function ServerPicker({ connections, onSaved, setup }: { connections: Connections; onSaved: () => void; setup: boolean }) {
@@ -1200,6 +1226,7 @@ export function SettingsView() {
                 { name: tab === 'radarr' ? 'Radarr' : 'Sonarr' },
               )}
             </p>
+            {status.data?.webhookKey && <NewWebhookKey onDone={status.reload} />}
           </Card>
         </section>
       )}
@@ -1218,6 +1245,7 @@ export function SettingsView() {
             <code className="block rounded-md bg-zinc-950 px-3 py-2 break-all text-zinc-200">
               {`${location.origin}/api/webhook/plex${status.data?.webhookKey ? `?key=${status.data.webhookKey}` : ''}`}
             </code>
+            {status.data?.webhookKey && <NewWebhookKey onDone={status.reload} />}
           </Card>
         </section>
       )}

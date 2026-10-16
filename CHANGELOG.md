@@ -5,6 +5,10 @@
 What changed in Blackbriar, newest version first.
 Until the 1.0 release, the middle number counts new features and the last one counts fixes in between.
 
+## bb.0.18.5 – 2026-10-16
+
+- Settings → Plex, Radarr and Sonarr: "Create new key" replaces the key in the webhook addresses, for example when an address showed up on a screenshot. The old addresses stop working at once; the new ones have to be entered in Plex, Radarr and Sonarr.
+
 ## bb.0.18.4 – 2026-10-16
 
 - Notices under "Keep an eye on" now always use the language set in Blackbriar. Before, they stayed in the language they were created in, even after switching. Older notices about release groups switch over at the next sync.

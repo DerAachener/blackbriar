@@ -99,6 +99,12 @@ const en: Record<string, string> = {
   'Melde dich bei Plex mit dem Konto an, dem der Server gehört. Danach wählst du hier den Server, und du kannst dich auch über Plex bei Blackbriar anmelden.':
     'Sign in to Plex with the account that owns the server. Then you pick the server here, and you can also sign in to Blackbriar with Plex.',
   'Mit Plex verbinden': 'Connect with Plex',
+  'Neuen Schlüssel erzeugen? Die bisherigen Adressen in Plex, Radarr und Sonarr funktionieren danach nicht mehr; du musst dort die neuen eintragen.':
+    'Create a new key? The current addresses in Plex, Radarr and Sonarr stop working; you have to enter the new ones there.',
+  'Neuer Schlüssel erzeugt. Trag die neuen Adressen in Plex, Radarr und Sonarr ein.': 'New key created. Enter the new addresses in Plex, Radarr and Sonarr.',
+  'Neuen Schlüssel erzeugen': 'Create new key',
+  'Gilt für alle Webhooks. Nötig, wenn eine Adresse in fremde Hände geraten ist, etwa auf einem Bildschirmfoto.':
+    'Applies to all webhooks. Needed when an address got out, for example on a screenshot.',
   'Du meldest dich mit dem Benutzernamen {name} und deinem Passwort an, oder über Plex, wenn es verbunden ist.':
     'You sign in with the user name {name} and your password, or through Plex if it is connected.',
   'Bisheriges Passwort': 'Current password',

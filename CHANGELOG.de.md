@@ -5,6 +5,10 @@
 Was sich in Blackbriar geändert hat, neueste Fassung zuerst.
 Bis zur Freigabe zählt die mittlere Zahl neue Funktionen, die letzte Korrekturen dazwischen.
 
+## bb.0.18.5 – 16.10.2026
+
+- Einstellungen → Plex, Radarr und Sonarr: „Neuen Schlüssel erzeugen“ ersetzt den Schlüssel in den Webhook-Adressen, etwa wenn eine Adresse auf einem Bildschirmfoto zu sehen war. Die alten Adressen gelten sofort nicht mehr; die neuen müssen in Plex, Radarr und Sonarr eingetragen werden.
+
 ## bb.0.18.4 – 16.10.2026
 
 - Hinweise unter „Im Blick behalten“ stehen jetzt immer in der eingestellten Sprache. Bisher blieben sie in der Sprache, in der sie entstanden waren, auch nach einem Wechsel. Ältere Hinweise zu Release-Gruppen werden beim nächsten Abgleich umgestellt.

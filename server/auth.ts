@@ -437,6 +437,13 @@ export function currentUser(req: FastifyRequest): string {
   return sessionOf(req)?.name ?? 'ohne Anmeldung'
 }
 
+/** Ersetzt den Schlüssel der Webhook-Adressen, etwa wenn eine Adresse in fremde Hände geraten ist. Die alte gilt sofort nicht mehr. */
+export function newWebhookKey(): string {
+  const key = randomBytes(16).toString('hex')
+  setSetting('webhook_key', key)
+  return key
+}
+
 /** Schlüssel, der in der Webhook-Adresse stehen muss, damit nicht jeder im Netz Abgleiche auslösen kann. */
 export function webhookKey(): string {
   let key = getSetting('webhook_key')
