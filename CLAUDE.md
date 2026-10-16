@@ -7,7 +7,7 @@
 - Oberfläche: React 19, Vite, Tailwind v4 in `web/`. Im Entwicklungsbetrieb läuft Vite auf Port 5173 und
   leitet `/api` an `API_TARGET` weiter (Standard `http://localhost:8787`).
 - Docker-Image für amd64 und arm64 über GitHub Actions: Push auf `main` baut `:dev`, ein Tag `vX.Y.Z` baut
-  `:X.Y.Z`, `:X.Y`, `:latest` und legt ein Release mit dem Text aus `CHANGELOG.md` an.
+  `:X.Y.Z`, `:X.Y`, `:latest` und legt ein Release mit dem Text aus `CHANGELOG.md` (englisch) an.
 - Befehle: `npm run dev:server`, `npm run dev:web`, `npm run typecheck`, `npm run build`.
 
 ## Texte
@@ -17,7 +17,8 @@
 - Kein Marketing, keine KI-Floskeln, keine Füllsätze. Lieber konkret sagen, was passiert und was zu tun ist.
 - Alles zweisprachig. Der deutsche Text ist der Schlüssel; jede neue Zeichenkette braucht ihre englische
   Fassung in `server/i18n.ts` bzw. `web/src/i18n.ts`.
-- Jede Änderung bekommt einen Eintrag in `CHANGELOG.md` (neue Funktion: mittlere Zahl, Korrektur: letzte).
+- Jede Änderung bekommt einen Eintrag in `CHANGELOG.md` (englisch) und `CHANGELOG.de.md` (deutsch), mit derselben
+  Versionsnummer (neue Funktion: mittlere Zahl, Korrektur: letzte). Datum im englischen Verlauf als JJJJ-MM-TT.
 
 ## Sicherheit und Logik
 

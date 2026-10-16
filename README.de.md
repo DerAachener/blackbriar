@@ -6,7 +6,7 @@
 
 Blackbriar zeigt, wer auf deinem Plex-Server was schaut und bewertet, und sagt dir, was weg kann. Deine Benutzer bekommen eine Mail, wenn etwas Neues da ist.
 
-[English version](README.md) · [Projektseite](https://apps.der-aachener.de/) · [Änderungsverlauf](CHANGELOG.md)
+[English version](README.md) · [Projektseite](https://apps.der-aachener.de/) · [Änderungsverlauf](CHANGELOG.de.md)
 
 ![Dashboard mit laufender Wiedergabe, offenen Bewertungen, „Kann weg“ und freiem Speicher](docs/screenshots/dashboard.png)
 
@@ -155,7 +155,7 @@ docker compose up -d
 
 Auf TrueNAS holt ein Neustart der App das neue Image nur, wenn im YAML `pull_policy: always` steht. Setz die Zeile unter `image:`, wenn du `:latest` nutzt.
 
-Was sich geändert hat, steht im [Änderungsverlauf](CHANGELOG.md). Die laufende Version steht unten in der Seitenleiste.
+Was sich geändert hat, steht im [Änderungsverlauf](CHANGELOG.de.md). Die laufende Version steht unten in der Seitenleiste.
 
 ### Zugriff von außen
 

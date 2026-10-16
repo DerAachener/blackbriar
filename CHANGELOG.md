@@ -1,214 +1,217 @@
-# Änderungsverlauf
+# Changelog
 
-Was sich in Blackbriar geändert hat, neueste Fassung zuerst.
-Bis zur Freigabe zählt die mittlere Zahl neue Funktionen, die letzte Korrekturen dazwischen.
+[Deutsche Fassung](CHANGELOG.de.md)
 
-## bb.0.18.4 – 16.10.2026
+What changed in Blackbriar, newest version first.
+Until the 1.0 release, the middle number counts new features and the last one counts fixes in between.
 
-- Hinweise unter „Im Blick behalten“ stehen jetzt immer in der eingestellten Sprache. Bisher blieben sie in der Sprache, in der sie entstanden waren, auch nach einem Wechsel. Ältere Hinweise zu Release-Gruppen werden beim nächsten Abgleich umgestellt.
+## bb.0.18.4 – 2026-10-16
 
-## bb.0.18.3 – 15.10.2026
+- Notices under "Keep an eye on" now always use the language set in Blackbriar. Before, they stayed in the language they were created in, even after switching. Older notices about release groups switch over at the next sync.
+- The changelog is now bilingual: `CHANGELOG.md` in English, also used for the release notes on GitHub, and `CHANGELOG.de.md` in German.
 
-- Fremde Webseiten können nichts mehr an Blackbriar schicken. Bisher hätte eine präparierte Seite, die man im selben Browser öffnet, im Hintergrund etwa einen Löschauftrag auslösen können, solange man angemeldet war. Webhooks von Plex, Radarr und Sonarr sind davon nicht betroffen.
-- Sicherheits-Kopfzeilen: Blackbriar lässt sich nicht mehr in fremde Seiten einbetten, und der Browser lädt keine Skripte von außen.
+## bb.0.18.3 – 2026-10-15
 
-## bb.0.18.2 – 15.10.2026
+- Other websites can no longer send anything to Blackbriar. Before, a crafted page opened in the same browser could have triggered a delete in the background while you were signed in. Webhooks from Plex, Radarr and Sonarr are not affected.
+- Security headers: Blackbriar can no longer be embedded in other pages, and the browser loads no scripts from elsewhere.
 
-- Einstellungen → Allgemein: Passwort ändern und „Auf allen anderen Geräten abmelden“. Nach einer Änderung des Passworts sind die anderen Geräte von selbst abgemeldet.
-- Passwort vergessen: Den Container einmal mit `AUTH_RESET=1` starten. Das löscht das Konto mit Passwort und alle Anmeldungen, die Daten bleiben. Ist Plex verbunden, meldet man sich danach über Plex an; sonst gibt es einen neuen Einrichtungscode.
+## bb.0.18.2 – 2026-10-15
 
-## bb.0.18.1 – 15.10.2026
+- Settings → General: change the password and "Sign out on all other devices". After a password change, all other devices are signed out automatically.
+- Forgot the password: start the container once with `AUTH_RESET=1`. This removes the password account and all sign-ins; your data stays. If Plex is connected, you then sign in with Plex; otherwise there is a new setup code.
 
-- Wer mit eigenem Konto eingerichtet hat, verbindet Plex unter Einstellungen → Plex mit einem Knopf, statt das Token von Hand zu suchen. Das Plex-Konto, das dort bestätigt, gilt als Besitzer; danach geht auch die Anmeldung über Plex.
+## bb.0.18.1 – 2026-10-15
 
-## bb.0.18.0 – 15.10.2026
+- If you set up Blackbriar with your own account, you now connect Plex under Settings → Plex with one button instead of looking up the token by hand. The Plex account that confirms there becomes the owner; after that, sign-in with Plex works too.
 
-- Eigenes Konto mit Benutzername und Passwort: Bei einer frischen Installation lässt sich nach dem Einrichtungscode wahlweise ein Konto anlegen statt sich mit Plex anzumelden. So kommt man in Blackbriar, bevor Plex verbunden ist.
-- Wer schon über Plex hineinkommt, kann unter Einstellungen → Allgemein ein Konto mit Passwort dazunehmen. Dann geht die Anmeldung auch, wenn plex.tv nicht erreichbar ist. Die Anmeldung über Plex bleibt.
-- Nach zehn falschen Passwörtern ist die Anmeldung zehn Minuten gesperrt.
+## bb.0.18.0 – 2026-10-15
 
-## bb.0.17.0 – 13.10.2026
+- Own account with user name and password: after the setup code, a fresh installation can create an account instead of signing in with Plex. That way you get into Blackbriar before Plex is connected.
+- If you already sign in with Plex, you can add an account with a password under Settings → General. Sign-in then also works when plex.tv is unreachable. Sign-in with Plex stays.
+- After ten wrong passwords, sign-in is locked for ten minutes.
 
-- Webhook für Radarr und Sonarr: Tragen sie die Adresse aus Einstellungen → Radarr bzw. Sonarr ein, bekommt Blackbriar Änderungen sofort mit, etwa ein ausgetauschtes Release, einen neuen Film oder eine gelöschte Datei. Hinweise zu Serien, Warteliste und Speicherplatz stimmen dann nach Sekunden statt nach bis zu einer Stunde.
-- Ohne den Webhook bleibt alles wie bisher: Blackbriar fragt stündlich nach.
+## bb.0.17.0 – 2026-10-13
 
-## bb.0.16.2 – 12.10.2026
+- Webhook for Radarr and Sonarr: enter the address from Settings → Radarr or Sonarr there, and Blackbriar picks up changes at once, such as a replaced release, a new movie or a deleted file. Series notices, waiting list and disk space are then up to date within seconds instead of up to an hour.
+- Without the webhook nothing changes: Blackbriar checks once an hour.
 
-- Info-Fenster: Längere Werte wie „Aktuelle Serien“ oder „hevc und h264“ brechen nicht mehr in zwei Zeilen um.
+## bb.0.16.2 – 2026-10-12
 
-## bb.0.16.1 – 12.10.2026
+- Info window: longer values such as a library name or "hevc and h264" no longer wrap onto two lines.
 
-- Info-Fenster, „Auf dem Server“: Die Angaben zur Datei stehen jetzt mit Beschriftung darüber da (Mediathek, Größe, Folgen, Auflösung, Video-Codec, Bitrate, Dateiformat). Haben die Folgen einer Serie verschiedene Werte, werden sie genannt, etwa „hevc und h264“; erst ab vier verschiedenen steht dort „gemischt“. Das gilt auch in der Bibliothek.
-- Info-Fenster: Darunter steht der Pfad der Datei, bei Serien der gemeinsame Ordner aller Folgen, mit einem Knopf zum Kopieren.
+## bb.0.16.1 – 2026-10-12
 
-## bb.0.16.0 – 12.10.2026
+- Info window, "On the server": the file details now have labels above them (library, size, episodes, resolution, video codec, bitrate, file format). If the episodes of a series differ, the values are listed, for example "hevc and h264"; only from four different values on does it say "mixed". The same applies in the library.
+- Info window: below that is the path of the file, or for series the common folder of all episodes, with a button to copy it.
 
-- Trailer nur noch in der eingestellten Sprache, keine Teaser mehr. Gibt es keinen, steht das da, mit einem Link zum englischen Trailer, falls vorhanden.
-- Hat TMDB eine Inhaltsangabe nur auf Englisch, steht ein Hinweis darüber. Für Titel auf dem Server kommt stattdessen zuerst der Text aus Plex.
-- Beides gilt auch für die Seite hinter „Mehr dazu“ in den Mails.
+## bb.0.16.0 – 2026-10-12
 
-## bb.0.15.1 – 12.10.2026
+- Trailers only in the language set in Blackbriar, no more teasers. If there is none, a note says so, with a link to the English trailer if one exists.
+- If TMDB only has an English overview, a note says so. For titles on the server, the text from Plex comes first instead.
+- Both also apply to the page behind "More about it" in the emails.
 
-- Hinweise zu Serien: Gemischte Release-Gruppen werden schon bei Gleichstand gemeldet, etwa wenn die ersten zwei Folgen einer Staffel von zwei Gruppen stammen. So lässt sich eingreifen, bevor weitere Folgen von der falschen Gruppe kommen.
+## bb.0.15.1 – 2026-10-12
 
-## bb.0.15.0 – 12.10.2026
+- Series notices: mixed release groups are reported even on a tie, for example when the first two episodes of a season come from two groups. That way you can step in before more episodes arrive from the wrong group.
 
-- Info-Fenster: Lange Inhaltsangaben stehen zunächst gekürzt da, „mehr anzeigen“ klappt sie auf.
-- Löschen gesehener Folgen: Steht die Serie noch auf einer Merkliste, warnt der Dialog davor, wie beim Löschen ganzer Titel.
+## bb.0.15.0 – 2026-10-12
 
-## bb.0.14.3 – 12.10.2026
+- Info window: long overviews are shortened at first; "show more" expands them.
+- Deleting watched episodes: if the series is still on a watchlist, the dialog warns about it, as it does for whole titles.
 
-- Behoben: Nach dem Löschen vieler Folgen war der Dialog höher als der Bildschirm, und „Schließen“ ließ sich nicht mehr erreichen. Der Dialog passt jetzt immer auf den Bildschirm und lässt sich notfalls rollen.
-- Für gelöschte Folgen steht eine Zeile da („In Plex gelöscht: 23 Folgen“) statt einer je Folge, auch im Protokoll.
+## bb.0.14.3 – 2026-10-12
 
-## bb.0.14.2 – 12.10.2026
+- Fixed: after deleting many episodes, the dialog was taller than the screen and "Close" could not be reached. The dialog now always fits the screen and scrolls if needed.
+- Deleted episodes get one line ("Deleted in Plex: 23 episodes") instead of one per episode, in the log as well.
 
-- Eine frische Installation übernimmt für „Was kommt“ das Land aus der Sprache des Browsers. Vorgewählt sind die weltweiten Anbieter, jetzt auch HBO Max; in Deutschland, Österreich und der Schweiz zusätzlich WOW, RTL+, Joyn Plus und Discovery+. Wer Land und Anbieter schon gespeichert hat, behält seine Auswahl.
-- Die Meldungen im Protokoll des Containers stehen in der eingestellten Sprache; vor dem ersten Aufruf auf Englisch.
-- Das Dashboard meldet „Keine Warnungen“ erst, wenn Plex verbunden ist.
+## bb.0.14.2 – 2026-10-12
 
-## bb.0.14.1 – 12.10.2026
+- A fresh installation takes the country for "Coming up" from the browser language. Preselected are the worldwide providers, now including HBO Max; in Germany, Austria and Switzerland also WOW, RTL+, Joyn Plus and Discovery+. If country and providers were already saved, the selection stays.
+- Messages in the container log use the language set in Blackbriar; English before the first visit.
+- The dashboard only reports "No warnings" once Plex is connected.
 
-- Kann Blackbriar nicht in seinen Datenordner schreiben, sagt es das beim Start mit dem passenden Befehl zur Abhilfe, statt mit einem Programmfehler abzubrechen. Das passiert vor allem, wenn `user:` nachträglich gesetzt wird.
-- Beispiel-YAML mit der Zeile für den Betrieb ohne Root.
+## bb.0.14.1 – 2026-10-12
 
-## bb.0.14.0 – 12.10.2026
+- If Blackbriar cannot write to its data folder, it says so at startup with the command to fix it, instead of crashing. This mostly happens when `user:` is added later.
+- Example YAML with the line for running without root.
 
-- Einrichtungscode: Eine frische Installation fragt bei der ersten Anmeldung nach einem Code, der im Protokoll des Containers steht. So kann sie nur einrichten, wer an den Server herankommt, und nicht, wer zufällig zuerst die Adresse findet.
-- Bestehende Installationen merken davon nichts. Mit `PLEX_TOKEN` als Umgebungsvariable oder `AUTH=off` gibt es keinen Code.
+## bb.0.14.0 – 2026-10-12
 
-## bb.0.13.2 – 12.10.2026
+- Setup code: on the first sign-in, a fresh installation asks for a code that is printed in the container log. Only someone with access to the server can set it up, not whoever happens to find the address first.
+- Existing installations are not affected. With `PLEX_TOKEN` as an environment variable or `AUTH=off`, there is no code.
 
-- Ohne Seerr ist „Kann weg“ strenger: Ein Titel erscheint erst, wenn der Besitzer und alle anderen, die ihn angefangen haben, ihn zu Ende gesehen und bewertet haben. Bisher zählte dann nur der Besitzer.
-- Ein Hinweis über der Liste sagt, dass Blackbriar ohne Seerr weder Wünsche noch Merklisten kennt.
-- Ohne Seerr entfallen die Kachel „Wünsche in Arbeit“ und die Zeile „auf keiner Merkliste“.
+## bb.0.13.2 – 2026-10-12
 
-## bb.0.13.1 – 11.10.2026
+- Without Seerr, "Cleanup" is stricter: a title only appears once the owner and everyone else who started it have finished and rated it. Before, only the owner counted.
+- A note above the list says that without Seerr, Blackbriar knows neither requests nor watchlists.
+- Without Seerr, the "Requests in progress" tile and the line "on no watchlist" are gone.
 
-- Einrichtung: Die Auswahl des Plex-Servers steht jetzt oben auf der Seite und sucht von selbst. Bisher war sie ein unauffälliger Knopf unter dem Formular.
-- „Verbindung testen“ sagt bei Plex, dass nur noch die Adresse fehlt.
+## bb.0.13.1 – 2026-10-11
 
-## bb.0.13.0 – 11.10.2026
+- Setup: picking the Plex server is now at the top of the page and searches by itself. Before, it was an inconspicuous button below the form.
+- "Test connection" for Plex says when only the address is missing.
 
-- Erster Start: Eine frische Installation übernimmt die Sprache des Browsers, Deutsch oder Englisch. Umstellen lässt sie sich wie bisher unter Einstellungen → Allgemein.
-- Nach der ersten Anmeldung mit Plex geht es direkt zu Einstellungen → Plex, wo der Server gewählt wird.
-- Der Hinweis „Plex ist noch nicht verbunden“ sagt, was zu tun ist, und führt mit einem Link zu den Einstellungen.
-- Am ersten Tag warnt das Dashboard nicht mehr vor einer fehlenden Sicherung.
+## bb.0.13.0 – 2026-10-11
 
-## bb.0.12.6 – 11.10.2026
+- First start: a fresh installation takes the browser language, German or English. It can be changed as before under Settings → General.
+- After the first sign-in with Plex you go straight to Settings → Plex to pick the server.
+- The note "Plex is not connected yet" says what to do and links to the settings.
+- On the first day, the dashboard no longer warns about a missing backup.
 
-- Dashboard: „Im Blick behalten“ steht jetzt über „Neu in den letzten sieben Tagen“. Gibt es keine Warnungen, ist das ein schmaler Balken; darunter folgt der Block mit Newsletter und Wochenrückblick.
-- Dashboard: Bei mehr als drei Hinweisen zu Serien stehen zunächst die ersten drei da, der Rest lässt sich aufklappen.
+## bb.0.12.6 – 2026-10-11
 
-## bb.0.12.5 – 11.10.2026
+- Dashboard: "Keep an eye on" now comes before "New in the last seven days". Without warnings it is a slim bar; below follows the block with newsletter and weekly review.
+- Dashboard: with more than three series notices, the first three are shown and the rest can be expanded.
 
-- Erinnerung: Einleitung und Anleitung richten sich danach, was wirklich offen ist. Steht ein Titel nur noch auf der Merkliste, ist nicht mehr von einer fehlenden Bewertung die Rede.
+## bb.0.12.5 – 2026-10-11
 
-## bb.0.12.4 – 11.10.2026
+- Reminder: intro and instructions depend on what is actually open. If a title is only still on the watchlist, the email no longer talks about a missing rating.
 
-- Erinnerung: Der Satz zum Behalten ist kürzer und eindeutig: „Willst du etwas noch einmal sehen? Was auf deiner Merkliste steht, bleibt auf dem Server.“
+## bb.0.12.4 – 2026-10-11
 
-## bb.0.12.3 – 11.10.2026
+- Reminder: the sentence about keeping a title is shorter and clear: "Want to watch something again? Whatever is on your watchlist stays on the server."
 
-- Erinnerungsmail mit klareren Texten: Betreff und Überschrift nennen den Server („Noch offen auf Name [Plex]“), am Titel steht, was zu tun ist („Bitte in Plex bewerten“).
-- Die Erinnerung erklärt jetzt, wie ein Titel auf dem Server bleibt: Wer etwas noch einmal sehen will, lässt es auf der Merkliste oder setzt es wieder darauf.
-- Der Link in der Fußzeile heißt „Erinnerungen abbestellen“.
-- Wunsch-Mail kürzer: „ein Titel von deiner Merkliste ist jetzt auf Name [Plex]“.
+## bb.0.12.3 – 2026-10-11
 
-## bb.0.12.2 – 10.10.2026
+- Reminder email with clearer texts: subject and heading name the server ("Still open on Name [Plex]"), and each title says what to do ("Please rate in Plex").
+- The reminder now explains how a title stays on the server: whoever wants to watch it again keeps it on the watchlist or adds it again.
+- The footer link is called "Unsubscribe from reminders".
+- Request email shorter: "a title from your watchlist is now on Name [Plex]".
 
-- Behoben: Liegt eine Serie in zwei Mediatheken (1080p und 4K) und steht in zwei Sonarr-Instanzen, trägt das Löschen der einen Kopie sie nur noch aus der zugehörigen Instanz aus, nicht mehr aus beiden.
+## bb.0.12.2 – 2026-10-10
 
-## bb.0.12.1 – 10.10.2026
+- Fixed: if a series is in two libraries (1080p and 4K) and in two Sonarr instances, deleting one copy now only removes it from the matching instance, not from both.
 
-- Seitenleiste unten links: „Projektseite“ als eigener Link, darunter „Version: …“.
-- Was kommt: größere Poster in den Kacheln.
+## bb.0.12.1 – 2026-10-10
 
-## bb.0.12.0 – 10.10.2026
+- Sidebar, bottom left: "Project page" as its own link, with "Version: …" below.
+- Coming up: larger posters in the tiles.
 
-- Was kommt: Jede Kachel hat „Ausblenden“. Der Titel verschwindet dann aus allen Bereichen und aus „Meine Themen“. Über „… Titel ausgeblendet“ oben lässt er sich wieder einblenden.
-- Die Versionsnummer steht unten links in der Seitenleiste; ein Klick öffnet die Projektseite. Der Link steht auch unter Einstellungen → Status.
-- Ein Klick auf das Logo führt zur Startseite.
+## bb.0.12.0 – 2026-10-10
 
-## bb.0.11.1 – 10.10.2026
+- Coming up: every tile has "Hide". The title then disappears from all sections and from "My topics". It can be shown again through "… titles hidden" at the top.
+- The version number is at the bottom left of the sidebar; a click opens the project page. The link is also under Settings → Status.
+- A click on the logo goes to the start page.
 
-- Mails: Steht „Poster von Blackbriar laden“ auf ein, werden auch Logo und Kalenderwoche im Kopf geladen. Die Mail hat dann keinen Anhang mehr.
+## bb.0.11.1 – 2026-10-10
 
-## bb.0.11.0 – 10.10.2026
+- Emails: with "Load posters from Blackbriar" switched on, the logo and calendar week in the header are loaded too. The email then has no attachments at all.
 
-- Mails: neue Einstellung unter Einstellungen → E-Mail, „Poster von Blackbriar laden statt anhängen“. Damit entfällt die Anhang-Liste, die manche Mailprogramme unter der Mail zeigen, und die Mail wird deutlich kleiner.
-- Die Infoseite hinter „Mehr dazu“ zeigt ein Poster von TMDB, wenn Plex keines hat.
+## bb.0.11.0 – 2026-10-10
 
-## bb.0.10.0 – 10.10.2026
+- Emails: new setting under Settings → Email, "Load posters from Blackbriar instead of attaching them". This removes the attachment list that some mail apps show below the email, and the email gets much smaller.
+- The page behind "More about it" shows a poster from TMDB when Plex has none.
 
-- Newsletter: Knopf „Probe senden“. Er schickt alles aus den letzten 7 Tagen an einen Benutzer, zum Ausprobieren. Die Probe zählt nicht als verschickt.
+## bb.0.10.0 – 2026-10-10
 
-## bb.0.9.1 – 09.10.2026
+- Newsletter: "Send sample" button. It sends everything from the last 7 days to one user, to try it out. The sample does not count as sent.
 
-- Newsletter: Am Handy stehen jetzt immer zwei Kacheln nebeneinander, auch wenn das Mailprogramm wenig Platz lässt.
+## bb.0.9.1 – 2026-10-09
 
-## bb.0.9.0 – 09.10.2026
+- Newsletter: on phones there are now always two tiles side by side, even when the mail app leaves little room.
 
-- Blackbriar hat jetzt eine Versionsnummer. Sie steht unter Einstellungen → Status, dahinter klein der Kurzcode des Builds.
-- Dieser Änderungsverlauf beginnt; die früheren Schritte sind nachgetragen.
+## bb.0.9.0 – 2026-10-09
 
-## bb.0.8.0 – 09.10.2026
+- Blackbriar now has a version number. It is shown under Settings → Status, followed by the short code of the build.
+- This changelog starts; earlier steps were added afterwards.
 
-- Newsletter: höchstens 10 Kacheln je Abschnitt. Was darüber hinausgeht, steht als Liste darunter; jeder Titel führt zur Seite mit Inhalt und Trailer.
-- Mails: Hat Plex kein Poster, kommt es von TMDB.
-- Newsletter: Unter den Bewertungen stehen nur Titel, die noch auf dem Server liegen und die der Empfänger öffnen kann.
+## bb.0.8.0 – 2026-10-09
 
-## bb.0.7.0 – 09.10.2026
+- Newsletter: at most 10 tiles per section. Anything beyond that is listed below; each title leads to a page with overview and trailer.
+- Emails: if Plex has no poster, it comes from TMDB.
+- Newsletter: the ratings section only lists titles that are still on the server and that the recipient can open.
 
-- Was kommt: Streaming-Filme der letzten 30 Tage bei den gewählten Anbietern.
-- Was kommt: Auswahl „Filme und Serien / Nur Filme / Nur Serien“ und das Häkchen „Nur Dokus“.
-- Was kommt: neuer Bereich „Meine Themen“ mit eigenen Schlagwörtern, etwa Krankenhaus und Rettung.
-- Was kommt: Kacheln statt Zeilen, über die volle Breite.
-- Einstellungen → TMDB: Suche in der Anbieterliste, damit auch Anbieter von weiter hinten wählbar sind.
+## bb.0.7.0 – 2026-10-09
 
-## bb.0.6.0 – 08.10.2026
+- Coming up: streaming movies from the last 30 days at the selected providers.
+- Coming up: choice of "Movies and series / Movies only / Series only" and the "Documentaries only" checkbox.
+- Coming up: new section "My topics" with your own keywords, for example hospital and rescue.
+- Coming up: tiles instead of rows, across the full width.
+- Settings → TMDB: search in the provider list, so providers further down can be picked too.
 
-- Verlauf: Gelöschte Titel bleiben stehen, gekennzeichnet als „nicht mehr auf dem Server“.
-- Verlauf: Oben steht, was zuletzt wirklich gelaufen ist.
-- Bewertungen gelöschter Titel bleiben erhalten.
+## bb.0.6.0 – 2026-10-08
 
-## bb.0.5.0 – 07.10.2026
+- History: deleted titles stay listed, marked as "no longer on the server".
+- History: the top shows what actually played most recently.
+- Ratings of deleted titles are kept.
 
-- Info-Fenster: Ein Klick auf einen Titel zeigt Inhalt, Datei, Staffeln, Personen und Wiedergaben.
-- Mediatheken aus Plex als Filter in der Bibliothek; einzelne Mediatheken lassen sich ausnehmen.
-- „Als gesehen markiert“ aus Plex zählt mit.
-- Benutzer lassen sich als „bewertet nie“ markieren; „Kann weg“ zeigt zusätzlich „Gesehen, aber nicht bewertet“.
-- Mails richten sich nach den Freigaben in Plex: Jeder sieht nur, was er öffnen kann.
-- Testnachricht je Benutzer; die Erinnerung lässt sich von Hand erneut schicken.
-- Der Plex-Webhook liest bei einem neuen Titel sofort die Bibliothek neu.
+## bb.0.5.0 – 2026-10-07
 
-## bb.0.4.0 – 05.10.2026
+- Info window: a click on a title shows overview, file, seasons, people and plays.
+- Libraries from Plex as a filter in the library view; single libraries can be excluded.
+- "Marked as watched" in Plex counts.
+- Users can be marked as "never rates"; "Cleanup" additionally shows "Watched but not rated".
+- Emails follow the sharing settings in Plex: everyone only sees what they can open.
+- Test message per user; the reminder can be sent again by hand.
+- The Plex webhook rereads the library at once when a new title arrives.
 
-- Hinweise im Dashboard: Staffel komplett, Folgen von verschiedenen Release-Gruppen.
-- Löschen: Warnung bei Serien, die noch laufen.
-- Eigenes Logo in der Seitenleiste.
+## bb.0.4.0 – 2026-10-05
 
-## bb.0.3.0 – 04.10.2026
+- Notices on the dashboard: season complete, episodes from different release groups.
+- Deleting: warning for series that are still running.
+- Own logo in the sidebar.
 
-- Dashboard als Startseite, mit den laufenden Wiedergaben.
-- Protokoll: was Blackbriar wann getan hat.
-- Tägliche Sicherung der Datenbank.
-- Sofort-Mail, wenn ein gewünschter Titel angekommen ist.
-- Speicherplatz, inaktive Benutzer und Links zu Radarr und Sonarr.
+## bb.0.3.0 – 2026-10-04
 
-## bb.0.2.0 – 03.10.2026
+- Dashboard as the start page, with the current sessions.
+- Log: what Blackbriar did and when.
+- Daily backup of the database.
+- Instant email when a requested title has arrived.
+- Disk space, inactive users and links to Radarr and Sonarr.
 
-- E-Mail: eigenes Postfach, Newsletter „Neu auf dem Server“ und Erinnerung an offene Bewertungen, pro Benutzer einstellbar.
-- Eigene Namen für Benutzer, Briefing-Ton für die Mails.
-- Hinweis, wenn Plex einen gewünschten Titel vermutlich falsch zugeordnet hat.
-- Löschen einzelner Folgen mit Abgleich in Sonarr.
+## bb.0.2.0 – 2026-10-03
 
-## bb.0.1.0 – 02.10.2026
+- Email: your own mailbox, newsletter "New on the server" and a reminder about open ratings, adjustable per user.
+- Custom names for users, briefing tone for the emails.
+- Notice when Plex has probably matched a requested title wrongly.
+- Deleting single episodes, kept in sync with Sonarr.
 
-- Grundstein: laufende Wiedergaben, Verlauf und Bewertungen aller Benutzer, mit Telegram-Nachricht.
-- Merklisten über Seerr, offene Bewertungen, „Kann weg“, Bibliothek, Statistik und Warteliste.
-- Adminbereich für alle Verbindungen; Radarr und Sonarr.
-- Anmeldung über Plex, Löschen aus Blackbriar heraus.
-- Einmaliger Import aus Tautulli und Tracearr.
-- „Was kommt“: Neustarts im Kino und bei Streaminganbietern, dazu der Kalender aus Radarr und Sonarr.
-- Oberfläche für Handy, Tablet und große Monitore, auf Deutsch und Englisch.
+## bb.0.1.0 – 2026-10-02
+
+- Foundation: current sessions, history and ratings of all users, with Telegram messages.
+- Watchlists through Seerr, open ratings, "Cleanup", library, statistics and waiting list.
+- Admin area for all connections; Radarr and Sonarr.
+- Sign-in with Plex, deleting from within Blackbriar.
+- One-time import from Tautulli and Tracearr.
+- "Coming up": new releases in cinemas and at streaming providers, plus the calendar from Radarr and Sonarr.
+- Interface for phone, tablet and large screens, in German and English.

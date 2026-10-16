@@ -2,7 +2,7 @@ name: Docker-Image bauen
 
 # Jeder Push auf main baut das Image :dev, zum Testen.
 # Ein Tag der Form v0.12.5 gibt die Fassung frei: Image :0.12.5, :0.12 und :latest, dazu ein Release
-# auf GitHub mit dem Abschnitt aus CHANGELOG.md.
+# auf GitHub mit dem Abschnitt aus CHANGELOG.md (englische Fassung).
 on:
   push:
     branches: [main]
