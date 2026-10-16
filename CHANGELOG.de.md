@@ -5,6 +5,10 @@
 Was sich in Blackbriar geändert hat, neueste Fassung zuerst.
 Die erste Zahl ändert sich bei größeren Umbauten, auf die man beim Update achten muss, die mittlere bei neuen Funktionen, die letzte bei Korrekturen.
 
+## bb.1.0.1 – 16.10.2026
+
+- Englische README: Die Liste der Titel, die weg können, heißt überall „Cleanup“, wie in der englischen Oberfläche (vorher „Can go“).
+
 ## bb.1.0.0 – 16.10.2026
 
 - Erste öffentliche Freigabe. An der App ändert sich gegenüber bb.0.19.2 nichts.

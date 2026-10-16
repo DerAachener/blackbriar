@@ -5,6 +5,10 @@
 What changed in Blackbriar, newest version first.
 The first number changes with larger changes that need attention when updating, the middle one with new features, the last one with fixes.
 
+## bb.1.0.1 – 2026-10-16
+
+- README: the list of titles that are safe to delete is called "Cleanup" everywhere, as in the English interface (before: "Can go").
+
 ## bb.1.0.0 – 2026-10-16
 
 - First public release. No changes to the app compared to bb.0.19.2.

@@ -11,7 +11,7 @@ body:
     id: version
     attributes:
       label: Blackbriar version
-      description: Shown at the bottom of the sidebar, for example bb.0.14.0
+      description: Shown at the bottom of the sidebar, for example bb.1.0.0
     validations:
       required: true
   - type: dropdown

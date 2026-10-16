@@ -14,7 +14,7 @@ Blackbriar shows who watches and rates what on your Plex server and tells you wh
 
 **Reads every user's ratings.** Plex stores ratings per account, and Tautulli only shows the owner's. Blackbriar sees what everyone on your server has rated.
 
-**"Can go" means watched and rated.** A title only appears on the list once everyone who requested it has watched and rated it, and it is no longer on anyone's watchlist. You do not have to build rules for that.
+**"Cleanup" means watched and rated.** A title only counts as safe to delete once everyone who requested it has watched and rated it, and it is no longer on anyone's watchlist. You do not have to build rules for that.
 
 **Automatic reminders:** Whoever has watched something but not rated it, or still has it on the watchlist, gets an email. It also tells them how to keep a title.
 
@@ -35,7 +35,7 @@ Blackbriar is made for servers with a few users and limited disk space. If you c
 - Users who never rate can be flagged, so watching alone counts as done for them
 
 ### Clean up
-- **Can go:** titles that are on nobody's watchlist and that everyone who requested them has watched and rated
+- **Cleanup:** titles that are safe to delete because they are on nobody's watchlist and everyone who requested them has watched and rated them
 - A second group for titles everyone has finished but not everyone rated, after a waiting period you choose
 - Delete from within Blackbriar, coordinated with Radarr, Sonarr and Seerr, for whole titles or for watched episodes. Deleting is switched off until you allow it in the settings
 - Library overview with size, codec, resolution and bitrate, filtered by Plex library
@@ -43,7 +43,7 @@ Blackbriar is made for servers with a few users and limited disk space. If you c
 - TV show warnings: completed seasons still marked as monitored in Sonarr, or mixed release groups within the same season
 - A notice when Plex has matched a title to the wrong entry, which makes Seerr request it again and again
 
-![Cleanup: titles that can go, with who requested, watched and rated them](docs/screenshots/cleanup.png)
+![Cleanup: titles that are safe to delete, with who requested, watched and rated them](docs/screenshots/cleanup.png)
 
 ### Keep your users informed
 - **Instant email** when a title from someone's watchlist has arrived
@@ -78,7 +78,7 @@ User names in the screenshots are made up.
 | Service | Required | Used for |
 |---|---|---|
 | Plex Media Server | yes | Sessions, history, ratings, library |
-| Seerr | recommended | Watchlists, requests, "Can go" |
+| Seerr | recommended | Watchlists, requests, Cleanup |
 | Radarr and Sonarr | optional | Cleanup, disk space, series notices. A second instance each for 4K is supported |
 | TMDB API key (free) | optional | Upcoming releases, title pages, complete seasons |
 | Telegram bot | optional | Notifications to the owner |
@@ -201,7 +201,7 @@ Plex itself only keeps a plain history without duration, device or playback type
 - **Ratings:** Plex stores ratings per account. Blackbriar asks plex.tv for the access token each shared user has for your server and reads that user's ratings with it. The tokens stay in memory and are never stored.
 - **Watched:** a movie counts as watched once it appears in the history or is marked as watched, a series once all available episodes have been watched.
 - **Watchlists:** come through Seerr, because only Seerr holds the plex.tv sign-ins of your users. They are read every 15 minutes.
-- **Can go:** a title appears when it is on nobody's watchlist and everyone who requested it in Seerr has watched and rated it. If nobody else requested it, the owner's own watch status and rating apply. Without Seerr, Blackbriar knows neither requests nor watchlists. A title then only appears once you and everyone else who started it are done, and the list is a hint at best: whether someone still wants to watch a title, Blackbriar cannot tell.
+- **Cleanup:** a title appears when it is on nobody's watchlist and everyone who requested it in Seerr has watched and rated it. If nobody else requested it, the owner's own watch status and rating apply. Without Seerr, Blackbriar knows neither requests nor watchlists. A title then only appears once you and everyone else who started it are done, and the list is a hint at best: whether someone still wants to watch a title, Blackbriar cannot tell.
 - **Deleting:** Blackbriar first removes the title from Radarr or Sonarr, or stops monitoring single episodes, then lets Plex delete the files, then resets the title in Seerr. Every deletion is confirmed individually and logged. For Plex to delete, “Allow media deletion” must be switched on there under Settings → Library.
 - **Emails:** sent through your own mailbox, encrypted only. Images are attached to the email itself. If a mail app lists them as attachments, you can let Blackbriar serve them instead; this needs the public address.
 - **Timing:** sessions every few seconds; history and ratings every five minutes or at once through the webhook; watchlists every 15 minutes; library hourly; Radarr and Sonarr hourly or at once through their webhook.
