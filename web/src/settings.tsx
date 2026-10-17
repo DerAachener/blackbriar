@@ -4,6 +4,7 @@ import { api, useApi, type ConnectionKey, type Connections, type ImportStatus, t
 import { locale, mark, t } from './i18n'
 import { LogPanel } from './log'
 import { Field } from './login'
+import { ChangelogAll } from './changelog'
 import { NewsletterSettings, ReminderSettings } from './newsletter'
 import { ago, Badge, Button, Card, ErrorNote, fmtDate, fmtSize, meta, num, PROJECT_URL } from './ui'
 import { Heading } from './views'
@@ -1026,6 +1027,7 @@ function GeneralSettings({ form, setForm, save, note }: FormProps) {
 }
 
 function StatusPanel({ status }: { status?: Status }) {
+  const [showChangelog, setShowChangelog] = useState(false)
   const [note, setNote] = useState<NoteState>()
   const s = status
   const sync = () =>
@@ -1036,7 +1038,9 @@ function StatusPanel({ status }: { status?: Status }) {
     <section className="space-y-3">
       <Card className="divide-y divide-zinc-800/70 px-4 py-1">
         <Line label={t('Version')}>
-          {s?.version}
+          <button onClick={() => setShowChangelog(true)} title={t('Alle Updates anzeigen')} className="text-sky-300 hover:underline">
+            {s?.version}
+          </button>
           <span className="ml-2 text-xs text-zinc-500">{s ? (s.commit ?? t('aus dem Quelltext gestartet')) : ''}</span>
           <a href={PROJECT_URL} target="_blank" rel="noreferrer" className="ml-3 text-xs text-sky-300 hover:underline">
             {t('Projektseite')}
@@ -1079,6 +1083,7 @@ function StatusPanel({ status }: { status?: Status }) {
       <Button onClick={() => void sync()} disabled={s?.sync.running}>
         <RefreshCw size={15} className={s?.sync.running ? 'animate-spin' : ''} /> {t('Jetzt abgleichen')}
       </Button>
+      {showChangelog && <ChangelogAll onClose={() => setShowChangelog(false)} />}
     </section>
   )
 }

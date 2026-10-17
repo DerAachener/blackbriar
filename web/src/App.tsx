@@ -24,6 +24,7 @@ import { api, useApi, type Status, type User } from './api'
 import { mark, t } from './i18n'
 import { CleanupView, FilesView, NotInPlexView, OpenView } from './media'
 import { SettingsView } from './settings'
+import { ChangelogAll, ChangelogNews } from './changelog'
 import { StatsView } from './stats'
 import { Button, ErrorNote, PROJECT_URL } from './ui'
 import { UpcomingView } from './upcoming'
@@ -80,6 +81,7 @@ export function App({ user, logout }: { user: string | null; logout: () => void 
 
   // Menü mit allen Ansichten, nur am Handy
   const [menuOpen, setMenuOpen] = useState(false)
+  const [showChangelog, setShowChangelog] = useState(false)
   // Titel, dessen Info-Fenster gerade offen ist
   const [info, setInfo] = useState<TitleRef>()
   const go = (hash: string) => {
@@ -182,7 +184,15 @@ export function App({ user, logout }: { user: string | null; logout: () => void 
           >
             <ExternalLink size={12} /> {t('Projektseite')}
           </a>
-          {status.data?.version && <p className="hidden px-3 text-xs text-zinc-600 lg:block">{t('Version: {version}', { version: status.data.version })}</p>}
+          {status.data?.version && (
+            <button
+              onClick={() => setShowChangelog(true)}
+              title={t('Alle Updates anzeigen')}
+              className="hidden px-3 text-left text-xs text-zinc-600 transition hover:text-amber-300 lg:block"
+            >
+              {t('Version: {version}', { version: status.data.version })}
+            </button>
+          )}
         </div>
       </aside>
 
@@ -322,11 +332,17 @@ export function App({ user, logout }: { user: string | null; logout: () => void 
           <a href={PROJECT_URL} target="_blank" rel="noreferrer" className="mt-4 flex items-center justify-center gap-1.5 text-xs text-zinc-500">
             <ExternalLink size={12} /> {t('Projektseite')}
           </a>
-          {status.data?.version && <p className="mt-1 text-center text-xs text-zinc-600">{t('Version: {version}', { version: status.data.version })}</p>}
+          {status.data?.version && (
+            <button onClick={() => setShowChangelog(true)} className="mx-auto mt-1 block text-xs text-zinc-600 hover:text-amber-300">
+              {t('Version: {version}', { version: status.data.version })}
+            </button>
+          )}
         </div>
       )}
     </div>
     {info && <TitleDialog target={info} onClose={() => setInfo(undefined)} />}
+    <ChangelogNews />
+    {showChangelog && <ChangelogAll onClose={() => setShowChangelog(false)} />}
     </TitleInfoContext.Provider>
   )
 }

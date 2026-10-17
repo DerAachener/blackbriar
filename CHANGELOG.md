@@ -5,6 +5,11 @@
 What changed in Blackbriar, newest version first.
 The first number changes with larger changes that need attention when updating, the middle one with new features, the last one with fixes.
 
+## bb.1.4.0 – 2026-10-17
+
+- After an update, a "What's new" window shows once with everything since the version you last saw. It is shown once per installation, not per device, and not on a fresh installation.
+- The version number in the sidebar and under Settings → Status opens all previous updates.
+
 ## bb.1.3.0 – 2026-10-17
 
 - Request emails for series wait until no new episode has arrived for 15 minutes. If Sonarr imports several seasons in a row, users get one email for all of them instead of one per season for the start and one for "complete".

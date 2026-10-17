@@ -28,6 +28,7 @@ import { requestMedia, testSeerr } from './seerr.ts'
 import { getDetails, testTmdb } from './tmdb.ts'
 import { ignoreMismatch, plexMismatches } from './mismatch.ts'
 import { deleteVersion, dismissNotice, openNotices, unmonitorNotice } from './notices.ts'
+import { changelog, changelogNews, markChangelogSeen } from './changelog.ts'
 import { backupStatus } from './backup.ts'
 import { events, logEvent } from './events.ts'
 import { dashboard } from './dashboard.ts'
@@ -160,6 +161,14 @@ export function registerRoutes(app: FastifyInstance): void {
   })
 
   // Hinweise zu Serien: Staffel komplett, gemischte Release-Gruppen
+  // „Was ist neu“ nach einem Update und alle bisherigen Fassungen
+  app.get('/api/changelog', () => changelog())
+  app.get('/api/changelog/news', () => changelogNews())
+  app.post('/api/changelog/seen', (_req, reply) => {
+    markChangelogSeen()
+    return reply.code(204).send()
+  })
+
   app.get('/api/notices', () => openNotices())
   app.post<{ Params: { id: string } }>('/api/notices/:id/ignore', (req) => {
     dismissNotice(Number(req.params.id))

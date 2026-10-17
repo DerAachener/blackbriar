@@ -104,6 +104,10 @@ const en: Record<string, string> = {
   'Neuer Schlüssel erzeugt. Trag die neuen Adressen in Plex, Radarr und Sonarr ein.': 'New key created. Enter the new addresses in Plex, Radarr and Sonarr.',
   'Neuen Schlüssel erzeugen': 'Create new key',
   'Nach oben': 'Move up',
+  'Was ist neu': "What's new",
+  'Alle Updates': 'All updates',
+  'Alle Updates anzeigen': 'Show all updates',
+  Verstanden: 'Got it',
   'Filme: mehrere Dateien': 'Movies: several files',
   'Liegen zwei Dateien eines Films im selben Ordner, ist meist eine alt, etwa nach dem Umwandeln; 4K und 1080p zählen getrennt. Nach dem Löschen liest Radarr den Film neu ein und übernimmt die verbliebene Datei. Liegen sie in verschiedenen Ordnern, hat Plex zwei Filme zusammengelegt.':
     'If two files of a movie are in the same folder, one is usually old, for example after converting; 4K and 1080p count separately. After deleting, Radarr rescans the movie and takes over the remaining file. If they are in different folders, Plex has merged two movies.',

@@ -14,7 +14,7 @@ ENV NODE_ENV=production \
     DATA_DIR=/data \
     PORT=8787 \
     APP_COMMIT=$GIT_SHA
-COPY package*.json CHANGELOG.md ./
+COPY package*.json CHANGELOG.md CHANGELOG.de.md ./
 RUN npm ci --omit=dev && npm cache clean --force
 COPY server ./server
 COPY --from=build /app/web/dist ./web/dist
