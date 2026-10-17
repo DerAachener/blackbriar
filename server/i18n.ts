@@ -159,6 +159,9 @@ const en: Record<string, string> = {
   '{name} liest den Film neu ein': '{name} rescans the movie',
   '{name} nicht erreicht: {detail}': '{name} not reached: {detail}',
   'alte Version': 'old version',
+  'Plex führt {n} Ordner als einen Film: {folders}.': 'Plex lists {n} folders as one movie: {folders}.',
+  '{title}: Plex führt {n} Ordner als einen Film': '{title}: Plex lists {n} folders as one movie',
+  'Die Dateien liegen in verschiedenen Ordnern. Das sind verschiedene Filme; bitte in Plex aufteilen.': 'The files are in different folders. These are different movies; please split them in Plex.',
   'Neuer Schlüssel für die Webhooks erzeugt ({user})': 'New key for the webhooks created ({user})',
   'Auf {n} anderen Geräten abgemeldet': 'Signed out on {n} other devices',
   'AUTH_RESET=1: Das Konto mit Passwort und alle Anmeldungen sind gelöscht. Nimm die Variable wieder heraus, sonst passiert das bei jedem Start.':

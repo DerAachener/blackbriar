@@ -36,12 +36,13 @@ if (!db.prepare('PRAGMA table_info(notices)').all().some((c) => c.name === 'data
   }
 }
 
-type NoticeData = { total: number } | { groups: [string, number[]][]; main: string | null; count: number } | { versions: number }
+type NoticeData = { total: number } | { groups: [string, number[]][]; main: string | null; count: number } | { versions: number } | { folders: string[] }
 
 /** Der Satz zu einem Hinweis, in der gerade eingestellten Sprache. */
 function noticeText(data: NoticeData): string {
   if ('total' in data) return t('Alle {n} Folgen sind da. Soll die Staffel in Sonarr auf „nicht beobachtet“?', { n: data.total })
   if ('versions' in data) return t('{n} Versionen derselben Fassung liegen nebeneinander.', { n: data.versions })
+  if ('folders' in data) return t('Plex führt {n} Ordner als einen Film: {folders}.', { n: data.folders.length, folders: data.folders.join(', ') })
   const parts = data.groups.map(([group, episodes]) =>
     t(episodes.length === 1 ? 'Folge {episodes} ist von {group}' : 'Folgen {episodes} sind von {group}', { episodes: episodeList(episodes), group }),
   )
@@ -197,54 +198,86 @@ interface VersionRow {
   resolution: string | null
 }
 
-/** Filme, bei denen in einer Fassung (4K oder darunter) mehr als eine Datei liegt; je Film und Fassung eine Gruppe. */
-function versionGroups(): Map<string, { rating_key: number; title: string; versions: VersionRow[] }> {
+/** Ordner einer Datei, so wie Plex den Pfad meldet (Windows oder Linux). */
+const folderOf = (file: string | null) => String(file ?? '').replace(/[\\/][^\\/]*$/, '')
+const folderName = (folder: string) => folder.split(/[\\/]/).pop() ?? folder
+
+interface FileGroup {
+  rating_key: number
+  title: string
+  versions: VersionRow[]
+}
+
+/** Alle Dateien der Filme, die Plex mit mehr als einer Datei führt, je Film gesammelt. */
+function multiFileMovies(): Map<number, FileGroup> {
   const rows = db
     .prepare(
       `SELECT v.media_id, v.rating_key, v.file, v.size, v.video_codec, v.audio_codec, v.audio_channels, v.resolution, i.title, i.year
        FROM media_versions v JOIN library_items i ON i.rating_key = v.rating_key WHERE i.type = 'movie' ORDER BY v.media_id`,
     )
     .all() as unknown as (VersionRow & { title: string; year: number | null })[]
-  const groups = new Map<string, { rating_key: number; title: string; versions: VersionRow[] }>()
+  const movies = new Map<number, FileGroup>()
   for (const r of rows) {
-    const id = `${r.rating_key}:${quality(r.resolution)}`
-    const g = groups.get(id) ?? { rating_key: r.rating_key, title: r.year ? `${r.title} (${r.year})` : r.title, versions: [] }
-    g.versions.push(r)
-    groups.set(id, g)
+    const m = movies.get(r.rating_key) ?? { rating_key: r.rating_key, title: r.year ? `${r.title} (${r.year})` : r.title, versions: [] }
+    m.versions.push(r)
+    movies.set(r.rating_key, m)
   }
-  for (const [id, g] of groups) if (g.versions.length < 2) groups.delete(id)
-  return groups
+  for (const [key, m] of movies) if (m.versions.length < 2) movies.delete(key)
+  return movies
 }
 
-/** Legt Hinweise für doppelte Versionen an und erledigt die, bei denen nur noch eine Datei übrig ist. Läuft nach dem Abgleich der Bibliothek. */
+/**
+ * Legt Hinweise zu Filmen mit mehreren Dateien an und erledigt die, die sich erledigt haben. Läuft nach dem Abgleich der Bibliothek.
+ *  - Mehrere Dateien derselben Fassung (4K oder darunter) im selben Ordner: eine davon ist meist alt, etwa nach dem Umwandeln.
+ *  - Dateien in verschiedenen Ordnern: Plex hat zwei Filme zu einem zusammengelegt. Hier wird nie etwas gelöscht.
+ */
 export function checkVersions(): void {
   const live = new Set<string>()
-  const insert = db.prepare("INSERT OR IGNORE INTO notices (key, kind, rating_key, season, title, detail, data, created_at) VALUES (?, 'versions', ?, 0, ?, ?, ?, ?)")
-  for (const [id, g] of versionGroups()) {
-    // Der Schlüssel enthält die Dateien: Kommt eine weitere dazu, ist das ein neuer Hinweis, auch wenn der alte ausgeblendet war
-    const key = `versions:${id}:${g.versions.map((v) => v.media_id).join(',')}`
-    live.add(key)
-    const data: NoticeData = { versions: g.versions.length }
-    if (insert.run(key, g.rating_key, g.title, noticeText(data), JSON.stringify(data), now()).changes) {
-      logEvent('sync', t('{title}: {n} Versionen derselben Fassung', { title: g.title, n: g.versions.length }))
+  const insert = db.prepare('INSERT OR IGNORE INTO notices (key, kind, rating_key, season, title, detail, data, created_at) VALUES (?, ?, ?, 0, ?, ?, ?, ?)')
+  for (const m of multiFileMovies().values()) {
+    const folders = [...new Set(m.versions.map((v) => folderOf(v.file)))]
+    if (folders.length > 1) {
+      const key = `merged:${m.rating_key}:${m.versions.map((v) => v.media_id).join(',')}`
+      live.add(key)
+      const data: NoticeData = { folders: folders.map(folderName) }
+      if (insert.run(key, 'merged', m.rating_key, m.title, noticeText(data), JSON.stringify(data), now()).changes) {
+        logEvent('sync', t('{title}: Plex führt {n} Ordner als einen Film', { title: m.title, n: folders.length }), 'warn')
+      }
+    }
+    // Je Ordner und Fassung: Liegen dort mehrere Dateien, ist das ein Fall für „alte Version löschen“
+    const groups = new Map<string, VersionRow[]>()
+    for (const v of m.versions) {
+      const id = `${folderOf(v.file)}\n${quality(v.resolution)}`
+      groups.set(id, [...(groups.get(id) ?? []), v])
+    }
+    for (const [id, versions] of groups) {
+      if (versions.length < 2) continue
+      // Der Schlüssel enthält die Dateien: Kommt eine weitere dazu, ist das ein neuer Hinweis, auch wenn der alte ausgeblendet war
+      const key = `versions:${m.rating_key}:${id.split('\n')[1]}:${versions.map((v) => v.media_id).join(',')}`
+      live.add(key)
+      const data: NoticeData = { versions: versions.length }
+      if (insert.run(key, 'versions', m.rating_key, m.title, noticeText(data), JSON.stringify(data), now()).changes) {
+        logEvent('sync', t('{title}: {n} Versionen derselben Fassung', { title: m.title, n: versions.length }))
+      }
     }
   }
-  for (const n of db.prepare("SELECT id, key FROM notices WHERE kind = 'versions' AND state = 'open'").all()) {
+  for (const n of db.prepare("SELECT id, key FROM notices WHERE kind IN ('versions', 'merged') AND state = 'open'").all()) {
     if (!live.has(String(n.key))) db.prepare("UPDATE notices SET state = 'done' WHERE id = ?").run(n.id)
   }
 }
 
-/** Die Versionen zu einem Hinweis, mit Kennzeichnung der umgewandelten (Einstellungen → Bibliothek). */
-function versionsOf(key: string): NoticeVersion[] {
-  const [, ratingKey, cls] = key.split(':')
+/** Die Dateien zu einem Hinweis (ihre Nummern stehen im Schlüssel), mit Kennzeichnung der umgewandelten. */
+function versionsOf(key: string): (NoticeVersion & { folder: string })[] {
+  const ids = (key.split(':').pop() ?? '').split(',').map(Number).filter(Boolean)
   const marker = getSettings().convertedMarker.trim().toLowerCase()
-  return (
-    db.prepare('SELECT media_id, file, size, video_codec, audio_codec, audio_channels, resolution FROM media_versions WHERE rating_key = ? ORDER BY media_id').all(Number(ratingKey)) as unknown as VersionRow[]
-  )
-    .filter((v) => quality(v.resolution) === cls)
+  const select = db.prepare('SELECT media_id, file, size, video_codec, audio_codec, audio_channels, resolution FROM media_versions WHERE media_id = ?')
+  return ids
+    .map((id) => select.get(id) as unknown as VersionRow | undefined)
+    .filter((v): v is VersionRow => Boolean(v))
     .map((v) => ({
       media_id: v.media_id,
       file: String(v.file ?? '').split(/[\\/]/).pop() ?? '',
+      folder: folderName(folderOf(v.file)),
       size: v.size,
       video_codec: v.video_codec,
       audio_codec: v.audio_codec,
@@ -266,6 +299,8 @@ export async function deleteVersion(noticeId: number, mediaId: number, user: str
   const version = versions.find((v) => v.media_id === mediaId)
   if (!version) throw new Error(t('Diese Version gibt es nicht mehr.'))
   if (versions.length < 2) throw new Error(t('Die letzte Version bleibt.'))
+  // Zweite Sicherung: Dateien in verschiedenen Ordnern sind verschiedene Filme, keine Versionen
+  if (new Set(versions.map((v) => v.folder)).size > 1) throw new Error(t('Die Dateien liegen in verschiedenen Ordnern. Das sind verschiedene Filme; bitte in Plex aufteilen.'))
   const ratingKey = notice.rating_key as number
   const title = notice.title as string
   try {
@@ -300,11 +335,13 @@ export interface NoticeVersion {
   resolution: string | null
   /** Trägt das Kennzeichen für umgewandelte Dateien */
   converted: boolean
+  /** Name des Ordners, in dem die Datei liegt */
+  folder: string
 }
 
 export interface Notice {
   id: number
-  kind: 'complete' | 'groups' | 'versions'
+  kind: 'complete' | 'groups' | 'versions' | 'merged'
   rating_key: number
   season: number
   title: string
@@ -325,12 +362,14 @@ export function openNotices(): Notice[] {
     .all()
     .map((n) => {
       const item = library.get(n.rating_key as number)
-      const entry = item?.arr.find((a) => arrInstance(a.instance)?.app === (n.kind === 'versions' ? 'radarr' : 'sonarr'))
+      const entry = item?.arr.find((a) => arrInstance(a.instance)?.app === (n.kind === 'versions' || n.kind === 'merged' ? 'radarr' : 'sonarr'))
       const slug = entry ? (db.prepare('SELECT slug FROM arr_titles WHERE instance = ? AND id = ?').get(entry.instance, entry.id)?.slug as string | null) : null
       const { data, key, ...rest } = n as unknown as Notice & { data: string | null; key: string }
       const detail = data ? noticeText(JSON.parse(data) as NoticeData) : rest.detail
       const base = { ...rest, detail, thumb: item?.thumb ?? null, url: entry ? arrLink(arrInstance(entry.instance)!, { slug }) : null }
-      return rest.kind === 'versions' ? { ...base, versions: versionsOf(key), canDelete: getSettings().allowDelete } : base
+      if (rest.kind === 'versions') return { ...base, versions: versionsOf(key), canDelete: getSettings().allowDelete }
+      if (rest.kind === 'merged') return { ...base, versions: versionsOf(key), canDelete: false }
+      return base
     })
 }
 

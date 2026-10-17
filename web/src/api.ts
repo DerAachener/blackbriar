@@ -176,11 +176,12 @@ export interface NoticeVersion {
   resolution: string | null
   /** Trägt das Kennzeichen für umgewandelte Dateien */
   converted: boolean
+  folder: string
 }
 
 export interface Notice {
   id: number
-  kind: 'complete' | 'groups' | 'versions'
+  kind: 'complete' | 'groups' | 'versions' | 'merged'
   rating_key: number
   season: number
   title: string

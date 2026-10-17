@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Copy, EyeOff, ExternalLink, PackageCheck, Shuffle, Trash2 } from 'lucide-react'
+import { Copy, EyeOff, ExternalLink, FolderTree, PackageCheck, Shuffle, Trash2 } from 'lucide-react'
 import { api, useApi, type Notice, type NoticeVersion } from './api'
 import { t } from './i18n'
 import { fileResolution, fmtSize, meta, Poster } from './ui'
@@ -7,7 +7,7 @@ import { fileResolution, fmtSize, meta, Poster } from './ui'
 /** Hinweise zu Serien: Staffel komplett oder Folgen von verschiedenen Release-Gruppen; erscheint nur, wenn es welche gibt. */
 export function SeasonNotices() {
   const { data: all, reload } = useApi<Notice[]>('/notices', 300_000)
-  const data = all?.filter((n) => n.kind !== 'versions')
+  const data = all?.filter((n) => n.kind === 'complete' || n.kind === 'groups')
   const [busy, setBusy] = useState<number | null>(null)
   const [error, setError] = useState('')
   // Bei vielen Hinweisen stehen zunächst nur die ersten da, sonst verdrängt der Abschnitt den Rest des Dashboards
@@ -96,19 +96,21 @@ export function SeasonNotices() {
 }
 
 /** Eine Datei eines Films mit ihren Angaben; die umgewandelte ist markiert. */
-function VersionLine({ v }: { v: NoticeVersion }) {
+function VersionLine({ v, showFolder }: { v: NoticeVersion; showFolder?: boolean }) {
   const audio = [v.audio_codec?.toUpperCase(), v.audio_channels ? `${v.audio_channels} ${t('Kanäle')}` : ''].filter(Boolean).join(' ')
   return (
     <span className="min-w-0">
       <span className="flex flex-wrap items-center gap-2">
         <span className="break-all">{v.file}</span>
-        <span
-          className={`shrink-0 rounded px-1.5 py-0.5 text-[11px] font-medium ${v.converted ? 'bg-emerald-400/15 text-emerald-300' : 'bg-zinc-800 text-zinc-400'}`}
-        >
-          {v.converted ? t('umgewandelt') : t('alt')}
-        </span>
+        {!showFolder && (
+          <span
+            className={`shrink-0 rounded px-1.5 py-0.5 text-[11px] font-medium ${v.converted ? 'bg-emerald-400/15 text-emerald-300' : 'bg-zinc-800 text-zinc-400'}`}
+          >
+            {v.converted ? t('umgewandelt') : t('alt')}
+          </span>
+        )}
       </span>
-      <span className="block text-xs text-zinc-500">{meta(fmtSize(v.size), fileResolution(v.resolution), v.video_codec ?? '', audio)}</span>
+      <span className="block text-xs text-zinc-500">{meta(showFolder ? t('Ordner: {name}', { name: v.folder }) : '', fmtSize(v.size), fileResolution(v.resolution), v.video_codec ?? '', audio)}</span>
     </span>
   )
 }
@@ -116,7 +118,7 @@ function VersionLine({ v }: { v: NoticeVersion }) {
 /** Filme mit mehr als einer Datei in derselben Fassung, etwa nach dem Umwandeln; die alte lässt sich hier löschen. */
 export function VersionNotices() {
   const { data: all, reload } = useApi<Notice[]>('/notices', 300_000)
-  const data = all?.filter((n) => n.kind === 'versions')
+  const data = all?.filter((n) => n.kind === 'versions' || n.kind === 'merged')
   const [busy, setBusy] = useState<number | null>(null)
   const [message, setMessage] = useState<{ text: string; ok: boolean }>()
   // Wie bei den Serien: zunächst drei, der Rest lässt sich aufklappen
@@ -148,10 +150,10 @@ export function VersionNotices() {
   return (
     <section className="space-y-3 rounded-xl border border-violet-400/30 bg-violet-400/5 p-4">
       <div className="space-y-1">
-        <p className="font-medium text-violet-200">{t('Filme: mehrere Versionen')}</p>
+        <p className="font-medium text-violet-200">{t('Filme: mehrere Dateien')}</p>
         <p className="text-sm text-zinc-400">
           {t(
-            'Diese Filme liegen in derselben Fassung mehr als einmal vor, etwa nach dem Umwandeln. 4K und 1080p zählen getrennt. Nach dem Löschen liest Radarr den Film neu ein und übernimmt die verbliebene Datei.',
+            'Liegen zwei Dateien eines Films im selben Ordner, ist meist eine alt, etwa nach dem Umwandeln; 4K und 1080p zählen getrennt. Nach dem Löschen liest Radarr den Film neu ein und übernimmt die verbliebene Datei. Liegen sie in verschiedenen Ordnern, hat Plex zwei Filme zusammengelegt.',
           )}
         </p>
         {message && <p className={`text-sm ${message.ok ? 'text-emerald-300' : 'text-red-300'}`}>{message.text}</p>}
@@ -162,13 +164,21 @@ export function VersionNotices() {
             <Poster thumb={n.thumb} className="w-10" />
             <div className="min-w-0 flex-1 basis-64 space-y-2 text-sm">
               <p className="flex items-center gap-2 font-medium">
-                <Copy size={15} className="shrink-0 text-violet-300" />
+                {n.kind === 'merged' ? <FolderTree size={15} className="shrink-0 text-amber-300" /> : <Copy size={15} className="shrink-0 text-violet-300" />}
                 <span>{n.title}</span>
               </p>
+              {n.kind === 'merged' && (
+                <div className="space-y-1 rounded-md border border-amber-400/20 bg-amber-400/5 p-2 text-zinc-300">
+                  <p>{n.detail}</p>
+                  <p className="text-xs text-zinc-400">
+                    {t('In Plex beim Film auf „…“ → „Aufteilen“ klicken. Danach beim falsch erkannten Eintrag „Zuordnung korrigieren“ wählen. Der Hinweis verschwindet beim nächsten Abgleich.')}
+                  </p>
+                </div>
+              )}
               <ul className="space-y-1.5">
                 {n.versions?.map((v) => (
                   <li key={v.media_id} className="flex items-start justify-between gap-3">
-                    <VersionLine v={v} />
+                    <VersionLine v={v} showFolder={n.kind === 'merged'} />
                     {n.canDelete && (
                       <button
                         onClick={() => remove(n, v)}
@@ -183,7 +193,7 @@ export function VersionNotices() {
                   </li>
                 ))}
               </ul>
-              {!n.canDelete && <p className="text-xs text-zinc-500">{t('Löschen ist in den Einstellungen unter Bibliothek ausgeschaltet; die alte Version kannst du dann in Plex löschen.')}</p>}
+              {n.kind === 'versions' && !n.canDelete && <p className="text-xs text-zinc-500">{t('Löschen ist in den Einstellungen unter Bibliothek ausgeschaltet; die alte Version kannst du dann in Plex löschen.')}</p>}
             </div>
             <div className="flex shrink-0 items-center gap-1">
               {n.url && (

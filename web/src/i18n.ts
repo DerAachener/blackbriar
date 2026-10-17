@@ -104,9 +104,12 @@ const en: Record<string, string> = {
   'Neuer Schlüssel erzeugt. Trag die neuen Adressen in Plex, Radarr und Sonarr ein.': 'New key created. Enter the new addresses in Plex, Radarr and Sonarr.',
   'Neuen Schlüssel erzeugen': 'Create new key',
   'Nach oben': 'Move up',
-  'Filme: mehrere Versionen': 'Movies: several versions',
-  'Diese Filme liegen in derselben Fassung mehr als einmal vor, etwa nach dem Umwandeln. 4K und 1080p zählen getrennt. Nach dem Löschen liest Radarr den Film neu ein und übernimmt die verbliebene Datei.':
-    'These movies exist more than once in the same quality, for example after converting. 4K and 1080p count separately. After deleting, Radarr rescans the movie and takes over the remaining file.',
+  'Filme: mehrere Dateien': 'Movies: several files',
+  'Liegen zwei Dateien eines Films im selben Ordner, ist meist eine alt, etwa nach dem Umwandeln; 4K und 1080p zählen getrennt. Nach dem Löschen liest Radarr den Film neu ein und übernimmt die verbliebene Datei. Liegen sie in verschiedenen Ordnern, hat Plex zwei Filme zusammengelegt.':
+    'If two files of a movie are in the same folder, one is usually old, for example after converting; 4K and 1080p count separately. After deleting, Radarr rescans the movie and takes over the remaining file. If they are in different folders, Plex has merged two movies.',
+  'In Plex beim Film auf „…“ → „Aufteilen“ klicken. Danach beim falsch erkannten Eintrag „Zuordnung korrigieren“ wählen. Der Hinweis verschwindet beim nächsten Abgleich.':
+    'In Plex, click "…" → "Split Apart" on the movie. Then choose "Fix Match" on the entry that was matched wrongly. The notice disappears at the next sync.',
+  'Ordner: {name}': 'Folder: {name}',
   umgewandelt: 'converted',
   alt: 'old',
   Kanäle: 'channels',

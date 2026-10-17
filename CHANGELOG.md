@@ -5,6 +5,11 @@
 What changed in Blackbriar, newest version first.
 The first number changes with larger changes that need attention when updating, the middle one with new features, the last one with fixes.
 
+## bb.1.2.1 – 2026-10-17
+
+- Several files of a movie only count as versions if they are in the same folder. If Plex lists files from different folders as one movie, Blackbriar now reports that Plex has merged two movies, with both folder names and how to split them in Plex. Nothing can be deleted from that notice.
+- The section is now called "Movies: several files".
+
 ## bb.1.2.0 – 2026-10-17
 
 - Keep an eye on: new notice for movies that exist more than once in the same quality, for example after converting a file and placing it next to the old one. Each file is listed with size, resolution and codecs; the one with your marker for converted files (Settings → Library) is labeled "converted". 4K and lower resolutions count separately, so a 4K and a 1080p version side by side are not reported.

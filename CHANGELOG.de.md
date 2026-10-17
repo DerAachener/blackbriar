@@ -5,6 +5,11 @@
 Was sich in Blackbriar geändert hat, neueste Fassung zuerst.
 Die erste Zahl ändert sich bei größeren Umbauten, auf die man beim Update achten muss, die mittlere bei neuen Funktionen, die letzte bei Korrekturen.
 
+## bb.1.2.1 – 17.10.2026
+
+- Mehrere Dateien eines Films gelten nur noch als Versionen, wenn sie im selben Ordner liegen. Führt Plex Dateien aus verschiedenen Ordnern als einen Film, meldet Blackbriar jetzt, dass Plex zwei Filme zusammengelegt hat, mit beiden Ordnernamen und der Anleitung zum Aufteilen in Plex. An diesem Hinweis lässt sich nichts löschen.
+- Der Abschnitt heißt jetzt „Filme: mehrere Dateien“.
+
 ## bb.1.2.0 – 17.10.2026
 
 - Im Blick behalten: neuer Hinweis für Filme, die in derselben Fassung mehr als einmal vorliegen, etwa wenn eine umgewandelte Datei neben die alte gelegt wurde. Jede Datei steht mit Größe, Auflösung und Codecs da; die mit deinem Kennzeichen für umgewandelte Dateien (Einstellungen → Bibliothek) ist als „umgewandelt“ markiert. 4K und darunter zählen getrennt, eine 4K- und eine 1080p-Fassung nebeneinander werden also nicht gemeldet.
