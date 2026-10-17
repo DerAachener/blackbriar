@@ -5,6 +5,10 @@
 Was sich in Blackbriar geändert hat, neueste Fassung zuerst.
 Die erste Zahl ändert sich bei größeren Umbauten, auf die man beim Update achten muss, die mittlere bei neuen Funktionen, die letzte bei Korrekturen.
 
+## bb.1.1.2 – 17.10.2026
+
+- Seitenleiste: „Einstellungen“ steht nicht mehr in der Liste, sondern unten über dem Abmelden. Reihenfolge unten: Einstellungen, abmelden, Projektseite, Version. Am Handy hat das Menü „Mehr“ dieselbe Reihenfolge.
+
 ## bb.1.1.1 – 17.10.2026
 
 - Einstellungen → Plex zeigt auch leere Mediatheken (mit „leer“ gekennzeichnet), damit sie sich schon vor dem ersten Titel einsortieren lassen. In der Bibliothek bleiben sie weiter ausgeblendet.

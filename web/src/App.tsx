@@ -49,6 +49,8 @@ const TABS: { id: TabId; label: string; icon: LucideIcon; short?: string }[] = [
   { id: 'users', label: mark('Benutzer'), icon: Users },
   { id: 'settings', label: mark('Einstellungen'), icon: SettingsIcon },
 ]
+// Einstellungen stehen nicht in der Liste, sondern unten über dem Abmelden (wie in Outcome)
+const NAV_TABS = TABS.filter((x) => x.id !== 'settings')
 const FILTERABLE: TabId[] = ['open', 'watchlist', 'titles', 'stats']
 
 /** Die Adresse hat die Form #tab, #users/123 für die Seite eines Benutzers oder #settings/reiter. */
@@ -129,7 +131,7 @@ export function App({ user, logout }: { user: string | null; logout: () => void 
           {logo && <img src="/api/mail/logo" alt="Blackbriar" onError={() => setLogo(false)} className="hidden w-full lg:block" />}
         </button>
         <nav className="space-y-1">
-          {TABS.map(({ id, label, icon: Icon }) => (
+          {NAV_TABS.map(({ id, label, icon: Icon }) => (
             <button
               key={id}
               onClick={() => go(id)}
@@ -150,6 +152,16 @@ export function App({ user, logout }: { user: string | null; logout: () => void 
           ))}
         </nav>
         <div className="mt-auto space-y-1 pt-3">
+          <button
+            onClick={() => go('settings')}
+            title={t('Einstellungen')}
+            className={`flex w-full items-center justify-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition lg:justify-start lg:py-2 ${
+              tab === 'settings' ? 'bg-zinc-800 text-white' : 'text-zinc-400 hover:bg-zinc-900 hover:text-zinc-200'
+            }`}
+          >
+            <SettingsIcon size={18} className="shrink-0" />
+            <span className="hidden truncate lg:inline">{t('Einstellungen')}</span>
+          </button>
           {user && (
             <button
               onClick={logout}
@@ -280,7 +292,7 @@ export function App({ user, logout }: { user: string | null; logout: () => void 
             )}
           </button>
           <div className="grid grid-cols-2 gap-2">
-            {TABS.map(({ id, label, icon: Icon }) => (
+            {NAV_TABS.map(({ id, label, icon: Icon }) => (
               <button
                 key={id}
                 onClick={() => go(id)}
@@ -294,8 +306,16 @@ export function App({ user, logout }: { user: string | null; logout: () => void 
               </button>
             ))}
           </div>
+          <button
+            onClick={() => go('settings')}
+            className={`mt-4 flex w-full items-center justify-center gap-2 rounded-xl border px-3 py-3 text-sm font-medium ${
+              tab === 'settings' ? 'border-amber-400/50 bg-zinc-900 text-white' : 'border-zinc-800 bg-zinc-900/60 text-zinc-300'
+            }`}
+          >
+            <SettingsIcon size={17} /> {t('Einstellungen')}
+          </button>
           {user && (
-            <button onClick={logout} className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl border border-zinc-800 px-3 py-3 text-sm text-zinc-400">
+            <button onClick={logout} className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl border border-zinc-800 px-3 py-3 text-sm text-zinc-400">
               <LogOut size={17} /> {t('{name} abmelden', { name: user })}
             </button>
           )}
