@@ -5,6 +5,11 @@
 Was sich in Blackbriar geändert hat, neueste Fassung zuerst.
 Die erste Zahl ändert sich bei größeren Umbauten, auf die man beim Update achten muss, die mittlere bei neuen Funktionen, die letzte bei Korrekturen.
 
+## bb.1.3.0 – 17.10.2026
+
+- Wunsch-Mails zu Serien warten, bis seit 15 Minuten keine neue Folge mehr angekommen ist. Importiert Sonarr mehrere Staffeln hintereinander, gibt es eine Mail für alle statt je Staffel einer zum Start und einer zu „komplett“.
+- Ist der Mailserver nicht erreichbar oder lehnt vorläufig ab, wird eine Wunsch-Mail nach 5 und nach 15 Minuten erneut versucht. Erst wenn auch das scheitert, gilt sie als nicht verschickt. Andere Fehler, etwa ein falsches Passwort, werden nicht wiederholt.
+
 ## bb.1.2.1 – 17.10.2026
 
 - Mehrere Dateien eines Films gelten nur noch als Versionen, wenn sie im selben Ordner liegen. Führt Plex Dateien aus verschiedenen Ordnern als einen Film, meldet Blackbriar jetzt, dass Plex zwei Filme zusammengelegt hat, mit beiden Ordnernamen und der Anleitung zum Aufteilen in Plex. An diesem Hinweis lässt sich nichts löschen.

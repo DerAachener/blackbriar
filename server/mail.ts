@@ -202,13 +202,20 @@ function transport() {
   })
 }
 
+/** Fehler, bei denen ein späterer zweiter Versuch Sinn hat: keine Verbindung oder eine vorläufige Absage (SMTP 4xx). */
+export class TransientMailError extends Error {}
+export const isTransient = (err: unknown) => err instanceof TransientMailError
+
 /** Meldungen des Mailservers in verständliche Worte fassen, ohne Zugangsdaten zu nennen. */
 function mailError(err: unknown): Error {
   const e = err as { code?: string; responseCode?: number; message?: string }
   if (e.code === 'EAUTH' || e.responseCode === 535) return new Error(t('Der Mailserver lehnt die Anmeldung ab. Stimmen Benutzer und Passwort?'))
   if (e.code === 'ENOTFOUND' || e.code === 'EDNS') return new Error(t('Der Mailserver wurde nicht gefunden. Stimmt die Adresse?'))
   if (e.code === 'ETIMEDOUT' || e.code === 'ECONNECTION' || e.code === 'ECONNREFUSED' || e.code === 'ESOCKET') {
-    return new Error(t('Keine Verbindung zum Mailserver. Stimmen Adresse und Port (465 oder 587)?'))
+    return new TransientMailError(t('Keine Verbindung zum Mailserver. Stimmen Adresse und Port (465 oder 587)?'))
+  }
+  if (e.responseCode && e.responseCode >= 400 && e.responseCode < 500) {
+    return new TransientMailError(t('Der Mailserver meldet: {detail}', { detail: String(e.message ?? err).slice(0, 200) }))
   }
   return new Error(t('Der Mailserver meldet: {detail}', { detail: String(e.message ?? err).slice(0, 200) }))
 }

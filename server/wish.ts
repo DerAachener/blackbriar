@@ -1,7 +1,7 @@
 import { mailConfigured, tmdbConfigured } from './config.ts'
 import { accessFilter, db, getSetting, now, setSetting } from './db.ts'
 import { t } from './i18n.ts'
-import { greeting, MAIL_COLORS, mailLayout, mailReason, plexWhere, sendMail, tone, userEmail, type Attachment, type Mail } from './mail.ts'
+import { greeting, isTransient, MAIL_COLORS, mailLayout, mailReason, plexWhere, sendMail, tone, userEmail, type Attachment, type Mail } from './mail.ts'
 import { effectivePrefs, logMail, titleUrl, unsubscribeUrl } from './mailprefs.ts'
 import { poster, summary } from './newsletter.ts'
 import { escapeHtml } from './telegram.ts'
@@ -12,6 +12,7 @@ import { getSeasonPlan } from './tmdb.ts'
 //
 // Filme werden gemeldet, sobald sie da sind. Bei Serien geht es staffelweise: einmal, sobald die erste Folge einer
 // Staffel da ist, und einmal, wenn die Staffel komplett ist. Ist sie beim ersten Hinsehen schon komplett, bleibt es bei einer Mail.
+// Gemeldet wird erst, wenn bei der Serie seit 15 Minuten nichts mehr angekommen ist, damit ein Import eine Mail ergibt.
 
 db.exec(`CREATE TABLE IF NOT EXISTS mail_wishes (
   user_id    INTEGER NOT NULL,
@@ -71,6 +72,10 @@ export interface Arrival {
 
 const WANTED = '(SELECT type, tmdb_id FROM watchlist WHERE user_id = ?1 UNION SELECT type, tmdb_id FROM requests WHERE user_id = ?1)'
 
+// Sammelzeit bei Serien: Solange noch Folgen eintreffen, etwa beim Import mehrerer Staffeln, wird gewartet.
+// So gibt es eine Mail für alles, statt je Staffel eine für den Start und eine für „komplett“.
+const QUIET = 15 * 60
+
 /** Frisch angekommene Filme, die dieser Benutzer wollte und über die er noch keine Mail bekommen hat. */
 function movieArrivals(userId: number, from: number): Arrival[] {
   return db
@@ -92,7 +97,8 @@ async function showArrivals(userId: number, from: number): Promise<Arrival[]> {
   const rows = db
     .prepare(
       `SELECT l.rating_key, l.title, l.year, l.thumb, l.tmdb_id, f.season,
-         COUNT(*) AS episodes, MAX(f.episode) AS last_episode
+         COUNT(*) AS episodes, MAX(f.episode) AS last_episode,
+         (SELECT MAX(x.added_at) FROM media_files x WHERE x.item_key = l.rating_key) AS show_last
        FROM library_items l
        JOIN ${WANTED} w ON w.type = l.type AND w.tmdb_id = l.tmdb_id
        JOIN media_files f ON f.item_key = l.rating_key AND f.rating_key <> f.item_key AND f.season > 0
@@ -108,6 +114,8 @@ async function showArrivals(userId: number, from: number): Promise<Arrival[]> {
   const shows = new Map<number, Arrival & { lines: string[] }>()
   for (const r of rows) {
     const key = r.rating_key as number
+    // Kam bei der Serie gerade noch eine Folge an, beim nächsten Durchlauf wieder hinsehen
+    if (now() - Number(r.show_last ?? 0) < QUIET) continue
     const season = Number(r.season)
     let complete = false
     if (tmdbConfigured() && r.tmdb_id != null) {
@@ -218,6 +226,22 @@ ${url ? `<a href="${url}" style="display:inline-block;margin-top:10px;background
 
 let sending = false
 
+// Zweiter und dritter Versuch, wenn nur die Verbindung zum Mailserver fehlte; nach einem Neustart sind sie verloren
+const RETRIES = [5 * 60_000, 15 * 60_000]
+
+function deliver(userId: number, mail: Mail, attempt = 0): void {
+  sendMail(mail)
+    .then(() => logMail(userId, 'newsletter', mail.subject))
+    .catch((err: Error) => {
+      const wait = RETRIES[attempt]
+      if (isTransient(err) && wait) {
+        setTimeout(() => deliver(userId, mail, attempt + 1), wait)
+        return
+      }
+      logMail(userId, 'newsletter', mail.subject, err.message)
+    })
+}
+
 /** Läuft jede Minute: meldet frisch angekommene Wunschtitel, pro Benutzer in einer Mail. */
 export async function maybeSendWishMails(): Promise<void> {
   if (sending || !mailConfigured()) return
@@ -232,13 +256,7 @@ export async function maybeSendWishMails(): Promise<void> {
       if (!items.length) continue
       // Vor dem Versand vermerken: Lieber fällt eine Mail aus, als dass sie nach einem Fehler jede Minute neu rausgeht
       markArrivals(id, items)
-      const mail = await render(id, items)
-      try {
-        await sendMail(mail)
-        logMail(id, 'newsletter', mail.subject)
-      } catch (err) {
-        logMail(id, 'newsletter', mail.subject, (err as Error).message)
-      }
+      deliver(id, await render(id, items))
     }
   } finally {
     sending = false

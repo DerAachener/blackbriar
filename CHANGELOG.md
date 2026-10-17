@@ -5,6 +5,11 @@
 What changed in Blackbriar, newest version first.
 The first number changes with larger changes that need attention when updating, the middle one with new features, the last one with fixes.
 
+## bb.1.3.0 – 2026-10-17
+
+- Request emails for series wait until no new episode has arrived for 15 minutes. If Sonarr imports several seasons in a row, users get one email for all of them instead of one per season for the start and one for "complete".
+- If the mail server cannot be reached or refuses temporarily, a request email is tried again after 5 and after 15 minutes. Only if that fails too, it counts as not sent. Other errors, such as a wrong password, are not retried.
+
 ## bb.1.2.1 – 2026-10-17
 
 - Several files of a movie only count as versions if they are in the same folder. If Plex lists files from different folders as one movie, Blackbriar now reports that Plex has merged two movies, with both folder names and how to split them in Plex. Nothing can be deleted from that notice.
