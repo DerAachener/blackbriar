@@ -5,6 +5,11 @@
 What changed in Blackbriar, newest version first.
 The first number changes with larger changes that need attention when updating, the middle one with new features, the last one with fixes.
 
+## bb.1.1.0 – 2026-10-17
+
+- Settings → Plex: the libraries can be put in your own order with arrows, for example the same as in Plex. The order applies everywhere: in the library view, in the settings and on the user page. Plex does not share its sidebar order, so it has to be set once here.
+- If a library is removed, the others keep their order, and the removed one gets its old place back if it returns. New libraries are added at the end.
+
 ## bb.1.0.1 – 2026-10-16
 
 - README: the list of titles that are safe to delete is called "Cleanup" everywhere, as in the English interface (before: "Can go").

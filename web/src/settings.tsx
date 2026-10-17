@@ -1,5 +1,5 @@
 import { useEffect, useState, type ReactNode } from 'react'
-import { ArrowRight, Check, Download, LogOut, PlugZap, RefreshCw, Send, Trash2, Upload } from 'lucide-react'
+import { ArrowRight, Check, ChevronDown, ChevronUp, Download, LogOut, PlugZap, RefreshCw, Send, Trash2, Upload } from 'lucide-react'
 import { api, useApi, type ConnectionKey, type Connections, type ImportStatus, type Provider, type SectionInfo, type Settings, type Status, type User } from './api'
 import { locale, mark, t } from './i18n'
 import { LogPanel } from './log'
@@ -711,27 +711,42 @@ function Notifications({ form, setForm, save, note, run }: FormProps) {
   )
 }
 
-/** Die Mediatheken aus Plex; ausgeschaltete bleiben bei „Kann weg“, offenen Bewertungen, Erinnerungen und im Newsletter außen vor. */
+/** Die Mediatheken aus Plex in eigener Reihenfolge; ausgeschaltete bleiben bei „Kann weg“, offenen Bewertungen, Erinnerungen und im Newsletter außen vor. */
 function Sections() {
   const { data, reload } = useApi<SectionInfo[]>('/sections')
   if (!data?.length) return null
   const set = (name: string, included: boolean) => void api('/sections', json('PUT', { name, included })).then(reload)
+  const move = (name: string, direction: 'up' | 'down') => void api('/sections/move', json('POST', { name, direction })).then(reload)
+  const arrow = 'rounded p-0.5 text-zinc-500 transition hover:bg-zinc-800 hover:text-zinc-200 disabled:pointer-events-none disabled:opacity-20'
   return (
     <section className="space-y-3">
       <Heading>{t('Mediatheken')}</Heading>
       <Card className="divide-y divide-zinc-800/70 px-4 py-1">
-        {data.map((s) => (
-          <Toggle
-            key={s.name}
-            label={s.name}
-            hint={meta(s.type === 'show' ? t('Serien') : t('Filme'), t('{n} Titel', { n: num(s.titles) }), fmtSize(s.size))}
-            checked={s.included}
-            onChange={(v) => set(s.name, v)}
-          />
+        {data.map((s, i) => (
+          <div key={s.name} className="flex items-center gap-3">
+            {/* Reihenfolge wie in Plex; gilt in der Bibliothek, hier und beim Benutzer */}
+            <span className="flex shrink-0 flex-col">
+              <button onClick={() => move(s.name, 'up')} disabled={i === 0} title={t('Nach oben')} aria-label={t('{name} nach oben', { name: s.name })} className={arrow}>
+                <ChevronUp size={14} />
+              </button>
+              <button onClick={() => move(s.name, 'down')} disabled={i === data.length - 1} title={t('Nach unten')} aria-label={t('{name} nach unten', { name: s.name })} className={arrow}>
+                <ChevronDown size={14} />
+              </button>
+            </span>
+            <div className="min-w-0 flex-1">
+              <Toggle
+                label={s.name}
+                hint={meta(s.type === 'show' ? t('Serien') : t('Filme'), t('{n} Titel', { n: num(s.titles) }), fmtSize(s.size))}
+                checked={s.included}
+                onChange={(v) => set(s.name, v)}
+              />
+            </div>
+          </div>
         ))}
       </Card>
       <p className="text-xs text-zinc-500">
-        {t('Ausgeschaltete Mediatheken bleiben bei „Kann weg“, den offenen Bewertungen, den Erinnerungen und im Newsletter außen vor. In der Bibliothek und im Verlauf sind sie weiter zu sehen.')}
+        {t('Ausgeschaltete Mediatheken bleiben bei „Kann weg“, den offenen Bewertungen, den Erinnerungen und im Newsletter außen vor. In der Bibliothek und im Verlauf sind sie weiter zu sehen.')}{' '}
+        {t('Mit den Pfeilen legst du die Reihenfolge fest, etwa wie in Plex; sie gilt auch in der Bibliothek und beim Benutzer.')}
       </p>
     </section>
   )

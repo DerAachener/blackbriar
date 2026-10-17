@@ -749,6 +749,42 @@ export function excludedSections(): Set<string> {
   return new Set(parseList(getSetting('excluded_sections')) ?? [])
 }
 
+/**
+ * Eigene Reihenfolge der Mediatheken (Einstellungen → Plex). Gespeichert sind alle Namen, die je einsortiert wurden,
+ * auch entfernte: Kommt eine Mediathek wieder, steht sie an ihrem alten Platz.
+ */
+export function sectionOrder(): string[] {
+  return parseList(getSetting('section_order')) ?? []
+}
+
+/** Sortiert nach der eigenen Reihenfolge; was dort nicht steht, kommt alphabetisch dahinter. */
+export function sortBySection<T>(items: T[], nameOf: (item: T) => string): T[] {
+  const order = sectionOrder()
+  const rank = (name: string) => {
+    const i = order.indexOf(name)
+    return i === -1 ? order.length : i
+  }
+  return [...items].sort((a, b) => rank(nameOf(a)) - rank(nameOf(b)) || nameOf(a).localeCompare(nameOf(b), 'de'))
+}
+
+/**
+ * Verschiebt eine Mediathek um einen Platz unter den vorhandenen (`current`). Entfernte bleiben in der gespeicherten
+ * Liste stehen, werden beim Verschieben aber übersprungen.
+ */
+export function moveSection(name: string, direction: 'up' | 'down', current: string[]): void {
+  // Neue Mediatheken an ihrer bisherigen Stelle (hinten, alphabetisch) in die Liste aufnehmen
+  const order = [...sectionOrder()]
+  for (const n of sortBySection(current, (x) => x)) if (!order.includes(n)) order.push(n)
+  const visible = order.filter((n) => current.includes(n))
+  const at = visible.indexOf(name)
+  const neighbour = visible[direction === 'up' ? at - 1 : at + 1]
+  if (at === -1 || !neighbour) return
+  const i = order.indexOf(name)
+  const j = order.indexOf(neighbour)
+  ;[order[i], order[j]] = [order[j]!, order[i]!]
+  setSetting('section_order', JSON.stringify(order))
+}
+
 export function setSectionIncluded(name: string, included: boolean): void {
   const excluded = excludedSections()
   if (included) excluded.delete(name)

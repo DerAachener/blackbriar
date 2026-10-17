@@ -103,6 +103,12 @@ const en: Record<string, string> = {
     'Create a new key? The current addresses in Plex, Radarr and Sonarr stop working; you have to enter the new ones there.',
   'Neuer Schlüssel erzeugt. Trag die neuen Adressen in Plex, Radarr und Sonarr ein.': 'New key created. Enter the new addresses in Plex, Radarr and Sonarr.',
   'Neuen Schlüssel erzeugen': 'Create new key',
+  'Nach oben': 'Move up',
+  'Nach unten': 'Move down',
+  '{name} nach oben': 'Move {name} up',
+  '{name} nach unten': 'Move {name} down',
+  'Mit den Pfeilen legst du die Reihenfolge fest, etwa wie in Plex; sie gilt auch in der Bibliothek und beim Benutzer.':
+    'Use the arrows to set the order, for example as in Plex; it also applies in the library and on the user page.',
   'Gilt für alle Webhooks. Nötig, wenn eine Adresse in fremde Hände geraten ist, etwa auf einem Bildschirmfoto.':
     'Applies to all webhooks. Needed when an address got out, for example on a screenshot.',
   'Du meldest dich mit dem Benutzernamen {name} und deinem Passwort an, oder über Plex, wenn es verbunden ist.':

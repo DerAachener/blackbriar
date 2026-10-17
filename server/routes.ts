@@ -19,7 +19,7 @@ import { deleteMedia, recentDeletions } from './delete.ts'
 import { testTracearr } from './tracearr.ts'
 import { importStatus, startImport } from './import.ts'
 import { ARR_INSTANCES, arrConfigured, configuredArrInstances, testArr } from './arr.ts'
-import { db, excludedSections, recordingSince, getSettings, saveConnection, saveSettings, historyTitles, setSectionIncluded, openItems, watchlistTitles } from './db.ts'
+import { db, excludedSections, moveSection, recordingSince, getSettings, saveConnection, saveSettings, historyTitles, setSectionIncluded, sortBySection, openItems, watchlistTitles } from './db.ts'
 import { titleDetail } from './title.ts'
 import { addPreset, deleteTopic, presetNames, saveTopic, searchKeywords, topics, topicTitles } from './topics.ts'
 import { airingShows, cleanupCandidates, episodeCleanup, fileList, mediaStats, notInPlex, requestStates, type FileItem } from './media.ts'
@@ -100,7 +100,7 @@ export function registerRoutes(app: FastifyInstance): void {
         ...u,
         open: open.get(u.id as number) ?? 0,
         // Mediatheken, die für den Benutzer in Plex freigegeben sind; leer, solange sie noch nicht gelesen wurden
-        sections: db.prepare('SELECT section FROM user_sections WHERE user_id = ? ORDER BY section COLLATE NOCASE').all(u.id as number).map((s) => s.section as string),
+        sections: sortBySection(db.prepare('SELECT section FROM user_sections WHERE user_id = ?').all(u.id as number).map((s) => s.section as string), (s) => s),
       }))
   })
 
@@ -254,9 +254,16 @@ export function registerRoutes(app: FastifyInstance): void {
       s.size += f.size
       map.set(f.section, s)
     }
-    return [...map.values()].sort((a, b) => a.name.localeCompare(b.name, 'de'))
+    return sortBySection([...map.values()], (s) => s.name)
   }
   app.get('/api/sections', () => sections())
+  app.post<{ Body: { name?: string; direction?: string } }>('/api/sections/move', (req, reply) => {
+    const current = sections().map((s) => s.name)
+    const name = String(req.body?.name ?? '')
+    if (!current.includes(name)) return reply.code(404).send({ error: t('Nicht gefunden') })
+    moveSection(name, req.body?.direction === 'up' ? 'up' : 'down', current)
+    return sections()
+  })
   app.put<{ Body: { name?: string; included?: boolean } }>('/api/sections', (req, reply) => {
     const name = String(req.body?.name ?? '')
     if (!sections().some((s) => s.name === name)) return reply.code(404).send({ error: t('Nicht gefunden') })
