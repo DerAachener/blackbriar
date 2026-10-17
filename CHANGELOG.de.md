@@ -5,6 +5,12 @@
 Was sich in Blackbriar geändert hat, neueste Fassung zuerst.
 Die erste Zahl ändert sich bei größeren Umbauten, auf die man beim Update achten muss, die mittlere bei neuen Funktionen, die letzte bei Korrekturen.
 
+## bb.1.2.0 – 17.10.2026
+
+- Im Blick behalten: neuer Hinweis für Filme, die in derselben Fassung mehr als einmal vorliegen, etwa wenn eine umgewandelte Datei neben die alte gelegt wurde. Jede Datei steht mit Größe, Auflösung und Codecs da; die mit deinem Kennzeichen für umgewandelte Dateien (Einstellungen → Bibliothek) ist als „umgewandelt“ markiert. 4K und darunter zählen getrennt, eine 4K- und eine 1080p-Fassung nebeneinander werden also nicht gemeldet.
+- Ist das Löschen erlaubt, lässt sich eine einzelne Version direkt am Hinweis löschen. Plex löscht nur diese Datei, der Film und die andere Version bleiben. Danach liest Radarr den Film neu ein und übernimmt die verbliebene Datei, statt ihn als fehlend zu führen.
+- Der Hinweis verschwindet von selbst, sobald nur noch eine Version da ist, auch wenn du in Plex löschst. Ausblenden geht wie bei den Serien-Hinweisen.
+
 ## bb.1.1.2 – 17.10.2026
 
 - Seitenleiste: „Einstellungen“ steht nicht mehr in der Liste, sondern unten über dem Abmelden. Reihenfolge unten: Einstellungen, abmelden, Projektseite, Version. Am Handy hat das Menü „Mehr“ dieselbe Reihenfolge.

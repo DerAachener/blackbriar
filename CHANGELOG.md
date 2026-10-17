@@ -5,6 +5,12 @@
 What changed in Blackbriar, newest version first.
 The first number changes with larger changes that need attention when updating, the middle one with new features, the last one with fixes.
 
+## bb.1.2.0 – 2026-10-17
+
+- Keep an eye on: new notice for movies that exist more than once in the same quality, for example after converting a file and placing it next to the old one. Each file is listed with size, resolution and codecs; the one with your marker for converted files (Settings → Library) is labeled "converted". 4K and lower resolutions count separately, so a 4K and a 1080p version side by side are not reported.
+- If deleting is allowed, a single version can be deleted from the notice. Plex deletes only that file, the movie and the other version stay. Then Radarr rescans the movie so it takes over the remaining file instead of treating the movie as missing.
+- The notice disappears on its own once only one version is left, also if you delete in Plex. It can be hidden like the series notices.
+
 ## bb.1.1.2 – 2026-10-17
 
 - Sidebar: "Settings" moved from the list to the bottom, above sign-out. Order at the bottom: Settings, sign out, project page, version. On phones, the "More" menu has the same order.

@@ -110,6 +110,20 @@ db.exec(`
   );
 
   -- Eine Zeile pro Film bzw. Folge; item_key ist der Film selbst oder die Serie
+  -- Jede Version eines Titels einzeln (Plex führt mehrere Dateien desselben Films als Versionen)
+  CREATE TABLE IF NOT EXISTS media_versions (
+    media_id       INTEGER PRIMARY KEY,
+    rating_key     INTEGER NOT NULL,
+    file           TEXT,
+    size           INTEGER NOT NULL DEFAULT 0,
+    video_codec    TEXT,
+    audio_codec    TEXT,
+    audio_channels INTEGER,
+    resolution     TEXT,
+    synced_at      INTEGER NOT NULL
+  );
+  CREATE INDEX IF NOT EXISTS media_versions_item ON media_versions (rating_key);
+
   CREATE TABLE IF NOT EXISTS media_files (
     rating_key  INTEGER PRIMARY KEY,
     item_key    INTEGER NOT NULL,

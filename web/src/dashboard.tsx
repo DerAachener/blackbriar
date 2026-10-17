@@ -4,7 +4,7 @@ import { useApi, type Dashboard, type HistoryItem, type Page, type Rating, type 
 import { locale, t } from './i18n'
 import { MismatchNotice } from './mismatch'
 import { useTitleInfo } from './titleinfo'
-import { SeasonNotices } from './notices'
+import { SeasonNotices, VersionNotices } from './notices'
 import { ago, Card, Empty, ErrorNote, fmtDate, fmtSize, meta, num, Poster } from './ui'
 import { Heading, historyTitle, PersonLine, RatingTile, SessionCard, Tile, TileGrid, userName } from './views'
 
@@ -117,6 +117,7 @@ export function DashboardView() {
           <Heading>{t('Im Blick behalten')}</Heading>
           <MismatchNotice />
           <SeasonNotices />
+          <VersionNotices />
           {d.warnings.length > 0 && (
             <Card className="space-y-2 border-amber-400/30 bg-amber-400/5 p-4">
               {d.warnings.map((w) => (

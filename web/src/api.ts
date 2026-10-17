@@ -166,9 +166,21 @@ export interface MailPrefsData {
   log: Record<'newsletter' | 'reminder', { at: number; kind: string; subject: string; ok: number; error: string | null; user_name: string | null }[]>
 }
 
+export interface NoticeVersion {
+  media_id: number
+  file: string
+  size: number
+  video_codec: string | null
+  audio_codec: string | null
+  audio_channels: number | null
+  resolution: string | null
+  /** Trägt das Kennzeichen für umgewandelte Dateien */
+  converted: boolean
+}
+
 export interface Notice {
   id: number
-  kind: 'complete' | 'groups'
+  kind: 'complete' | 'groups' | 'versions'
   rating_key: number
   season: number
   title: string
@@ -176,6 +188,8 @@ export interface Notice {
   created_at: number
   thumb: string | null
   url: string | null
+  versions?: NoticeVersion[]
+  canDelete?: boolean
 }
 
 export interface Mismatch {

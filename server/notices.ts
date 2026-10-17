@@ -1,9 +1,10 @@
-import { arrInstance, arrLink, getSeriesFiles, unmonitorSeason } from './arr.ts'
+import { arrInstance, arrLink, getSeriesFiles, rescanArr, unmonitorSeason } from './arr.ts'
 import { telegramConfigured, tmdbConfigured } from './config.ts'
 import { db, getSetting, getSettings, now, setSetting } from './db.ts'
 import { logEvent } from './events.ts'
 import { t } from './i18n.ts'
 import { fileList } from './media.ts'
+import { plexDelete } from './plex.ts'
 import { escapeHtml, sendTelegram } from './telegram.ts'
 import { getSeasonPlan } from './tmdb.ts'
 
@@ -35,11 +36,12 @@ if (!db.prepare('PRAGMA table_info(notices)').all().some((c) => c.name === 'data
   }
 }
 
-type NoticeData = { total: number } | { groups: [string, number[]][]; main: string | null; count: number }
+type NoticeData = { total: number } | { groups: [string, number[]][]; main: string | null; count: number } | { versions: number }
 
 /** Der Satz zu einem Hinweis, in der gerade eingestellten Sprache. */
 function noticeText(data: NoticeData): string {
   if ('total' in data) return t('Alle {n} Folgen sind da. Soll die Staffel in Sonarr auf „nicht beobachtet“?', { n: data.total })
+  if ('versions' in data) return t('{n} Versionen derselben Fassung liegen nebeneinander.', { n: data.versions })
   const parts = data.groups.map(([group, episodes]) =>
     t(episodes.length === 1 ? 'Folge {episodes} ist von {group}' : 'Folgen {episodes} sind von {group}', { episodes: episodeList(episodes), group }),
   )
@@ -179,31 +181,156 @@ export async function checkSeasons(): Promise<void> {
   if (first) setSetting('notices_started', String(now()))
 }
 
+// ---------- Doppelte Versionen bei Filmen ----------
+
+// 4K und alles darunter sind zwei Fassungen, die man bewusst nebeneinander hält; doppelt ist nur, was in derselben liegt
+const quality = (resolution: string | null) => (String(resolution ?? '').toLowerCase() === '4k' ? '4k' : 'hd')
+
+interface VersionRow {
+  media_id: number
+  rating_key: number
+  file: string | null
+  size: number
+  video_codec: string | null
+  audio_codec: string | null
+  audio_channels: number | null
+  resolution: string | null
+}
+
+/** Filme, bei denen in einer Fassung (4K oder darunter) mehr als eine Datei liegt; je Film und Fassung eine Gruppe. */
+function versionGroups(): Map<string, { rating_key: number; title: string; versions: VersionRow[] }> {
+  const rows = db
+    .prepare(
+      `SELECT v.media_id, v.rating_key, v.file, v.size, v.video_codec, v.audio_codec, v.audio_channels, v.resolution, i.title, i.year
+       FROM media_versions v JOIN library_items i ON i.rating_key = v.rating_key WHERE i.type = 'movie' ORDER BY v.media_id`,
+    )
+    .all() as unknown as (VersionRow & { title: string; year: number | null })[]
+  const groups = new Map<string, { rating_key: number; title: string; versions: VersionRow[] }>()
+  for (const r of rows) {
+    const id = `${r.rating_key}:${quality(r.resolution)}`
+    const g = groups.get(id) ?? { rating_key: r.rating_key, title: r.year ? `${r.title} (${r.year})` : r.title, versions: [] }
+    g.versions.push(r)
+    groups.set(id, g)
+  }
+  for (const [id, g] of groups) if (g.versions.length < 2) groups.delete(id)
+  return groups
+}
+
+/** Legt Hinweise für doppelte Versionen an und erledigt die, bei denen nur noch eine Datei übrig ist. Läuft nach dem Abgleich der Bibliothek. */
+export function checkVersions(): void {
+  const live = new Set<string>()
+  const insert = db.prepare("INSERT OR IGNORE INTO notices (key, kind, rating_key, season, title, detail, data, created_at) VALUES (?, 'versions', ?, 0, ?, ?, ?, ?)")
+  for (const [id, g] of versionGroups()) {
+    // Der Schlüssel enthält die Dateien: Kommt eine weitere dazu, ist das ein neuer Hinweis, auch wenn der alte ausgeblendet war
+    const key = `versions:${id}:${g.versions.map((v) => v.media_id).join(',')}`
+    live.add(key)
+    const data: NoticeData = { versions: g.versions.length }
+    if (insert.run(key, g.rating_key, g.title, noticeText(data), JSON.stringify(data), now()).changes) {
+      logEvent('sync', t('{title}: {n} Versionen derselben Fassung', { title: g.title, n: g.versions.length }))
+    }
+  }
+  for (const n of db.prepare("SELECT id, key FROM notices WHERE kind = 'versions' AND state = 'open'").all()) {
+    if (!live.has(String(n.key))) db.prepare("UPDATE notices SET state = 'done' WHERE id = ?").run(n.id)
+  }
+}
+
+/** Die Versionen zu einem Hinweis, mit Kennzeichnung der umgewandelten (Einstellungen → Bibliothek). */
+function versionsOf(key: string): NoticeVersion[] {
+  const [, ratingKey, cls] = key.split(':')
+  const marker = getSettings().convertedMarker.trim().toLowerCase()
+  return (
+    db.prepare('SELECT media_id, file, size, video_codec, audio_codec, audio_channels, resolution FROM media_versions WHERE rating_key = ? ORDER BY media_id').all(Number(ratingKey)) as unknown as VersionRow[]
+  )
+    .filter((v) => quality(v.resolution) === cls)
+    .map((v) => ({
+      media_id: v.media_id,
+      file: String(v.file ?? '').split(/[\\/]/).pop() ?? '',
+      size: v.size,
+      video_codec: v.video_codec,
+      audio_codec: v.audio_codec,
+      audio_channels: v.audio_channels,
+      resolution: v.resolution,
+      converted: Boolean(marker) && String(v.file ?? '').toLowerCase().includes(marker),
+    }))
+}
+
+/**
+ * Löscht eine Version eines Films in Plex. Die letzte Version bleibt immer. Danach liest Radarr den Film neu ein,
+ * damit es die verbliebene Datei übernimmt, statt den Film als fehlend zu führen und neu zu laden.
+ */
+export async function deleteVersion(noticeId: number, mediaId: number, user: string): Promise<string> {
+  if (!getSettings().allowDelete) throw new Error(t('Das Löschen ist in den Einstellungen nicht erlaubt.'))
+  const notice = db.prepare("SELECT key, rating_key, title FROM notices WHERE id = ? AND kind = 'versions' AND state = 'open'").get(noticeId)
+  if (!notice) throw new Error(t('Diesen Hinweis gibt es nicht mehr.'))
+  const versions = versionsOf(String(notice.key))
+  const version = versions.find((v) => v.media_id === mediaId)
+  if (!version) throw new Error(t('Diese Version gibt es nicht mehr.'))
+  if (versions.length < 2) throw new Error(t('Die letzte Version bleibt.'))
+  const ratingKey = notice.rating_key as number
+  const title = notice.title as string
+  try {
+    await plexDelete(`/library/metadata/${ratingKey}/media/${mediaId}`)
+  } catch (err) {
+    logEvent('delete', `${title} · ${version.file} · ${user}: ${(err as Error).message}`, 'error')
+    throw err
+  }
+  db.prepare('DELETE FROM media_versions WHERE media_id = ?').run(mediaId)
+  const steps = [t('In Plex gelöscht: {file}', { file: version.file })]
+  const item = fileList().find((f) => f.rating_key === ratingKey)
+  for (const entry of (item?.arr ?? []).filter((a) => arrInstance(a.instance)?.app === 'radarr')) {
+    try {
+      await rescanArr(arrInstance(entry.instance)!, entry.id)
+      steps.push(t('{name} liest den Film neu ein', { name: entry.name }))
+    } catch (err) {
+      steps.push(t('{name} nicht erreicht: {detail}', { name: entry.name, detail: (err as Error).message }))
+    }
+  }
+  checkVersions()
+  logEvent('delete', `${title} · ${t('alte Version')} · ${user}: ${steps.join(' · ')}`)
+  return steps.join(' · ')
+}
+
+export interface NoticeVersion {
+  media_id: number
+  file: string
+  size: number
+  video_codec: string | null
+  audio_codec: string | null
+  audio_channels: number | null
+  resolution: string | null
+  /** Trägt das Kennzeichen für umgewandelte Dateien */
+  converted: boolean
+}
+
 export interface Notice {
   id: number
-  kind: 'complete' | 'groups'
+  kind: 'complete' | 'groups' | 'versions'
   rating_key: number
   season: number
   title: string
   detail: string
   created_at: number
   thumb: string | null
-  /** Adresse der Serie in Sonarr, falls sie dort steht */
+  /** Adresse der Serie in Sonarr bzw. des Films in Radarr, falls er dort steht */
   url: string | null
+  /** Nur bei doppelten Versionen: die Dateien, und ob das Löschen erlaubt ist */
+  versions?: NoticeVersion[]
+  canDelete?: boolean
 }
 
 export function openNotices(): Notice[] {
   const library = new Map(fileList().map((f) => [f.rating_key, f]))
   return db
-    .prepare("SELECT id, kind, rating_key, season, title, detail, data, created_at FROM notices WHERE state = 'open' ORDER BY id DESC")
+    .prepare("SELECT id, key, kind, rating_key, season, title, detail, data, created_at FROM notices WHERE state = 'open' ORDER BY id DESC")
     .all()
     .map((n) => {
       const item = library.get(n.rating_key as number)
-      const entry = item?.arr.find((a) => arrInstance(a.instance)?.app === 'sonarr')
+      const entry = item?.arr.find((a) => arrInstance(a.instance)?.app === (n.kind === 'versions' ? 'radarr' : 'sonarr'))
       const slug = entry ? (db.prepare('SELECT slug FROM arr_titles WHERE instance = ? AND id = ?').get(entry.instance, entry.id)?.slug as string | null) : null
-      const { data, ...rest } = n as unknown as Notice & { data: string | null }
+      const { data, key, ...rest } = n as unknown as Notice & { data: string | null; key: string }
       const detail = data ? noticeText(JSON.parse(data) as NoticeData) : rest.detail
-      return { ...rest, detail, thumb: item?.thumb ?? null, url: entry ? arrLink(arrInstance(entry.instance)!, { slug }) : null }
+      const base = { ...rest, detail, thumb: item?.thumb ?? null, url: entry ? arrLink(arrInstance(entry.instance)!, { slug }) : null }
+      return rest.kind === 'versions' ? { ...base, versions: versionsOf(key), canDelete: getSettings().allowDelete } : base
     })
 }
 

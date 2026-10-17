@@ -6,7 +6,7 @@ import { pms, pmsPaged, getPlexUsers, resetPlexCache, type PlexUser } from './pl
 import { sendTelegram, escapeHtml } from './telegram.ts'
 import { locale, t } from './i18n.ts'
 import { unnotifiedMismatches, type Mismatch } from './mismatch.ts'
-import { checkSeasons } from './notices.ts'
+import { checkSeasons, checkVersions } from './notices.ts'
 import { refreshStorage } from './storage.ts'
 import { logEvent } from './events.ts'
 
@@ -70,11 +70,33 @@ async function syncLibrary(): Promise<void> {
        season = excluded.season, episode = excluded.episode, title = excluded.title, owner_watched = excluded.owner_watched,
        added_at = excluded.added_at`,
   )
+  const upsertVersion = db.prepare(
+    `INSERT INTO media_versions (media_id, rating_key, file, size, video_codec, audio_codec, audio_channels, resolution, synced_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+     ON CONFLICT(media_id) DO UPDATE SET rating_key = excluded.rating_key, file = excluded.file, size = excluded.size,
+       video_codec = excluded.video_codec, audio_codec = excluded.audio_codec, audio_channels = excluded.audio_channels,
+       resolution = excluded.resolution, synced_at = excluded.synced_at`,
+  )
   // Größe über alle Versionen und Teile; Codec und Co. von der ersten Version
   const saveFile = (m: any, itemKey: number) => {
     const first = m.Media?.[0]
     if (!first) return
     const parts = (m.Media as any[]).flatMap((x) => x.Part ?? [])
+    for (const v of m.Media as any[]) {
+      if (!v.id) continue
+      const vParts = (v.Part ?? []) as any[]
+      upsertVersion.run(
+        Number(v.id),
+        Number(m.ratingKey),
+        vParts[0]?.file ?? null,
+        vParts.reduce((sum, p) => sum + Number(p.size ?? 0), 0),
+        v.videoCodec ?? null,
+        v.audioCodec ?? null,
+        v.audioChannels ?? null,
+        v.videoResolution ?? null,
+        stamp,
+      )
+    }
     upsertFile.run(
       Number(m.ratingKey),
       itemKey,
@@ -134,6 +156,7 @@ async function syncLibrary(): Promise<void> {
   }
   db.prepare('DELETE FROM library_items WHERE synced_at < ?').run(stamp)
   db.prepare('DELETE FROM media_files WHERE synced_at < ?').run(stamp)
+  db.prepare('DELETE FROM media_versions WHERE synced_at < ?').run(stamp)
 }
 
 async function syncHistory(): Promise<void> {
@@ -553,6 +576,7 @@ export async function runCycle(full = false): Promise<void> {
     await notify()
     if (slow) await optional(syncArr)
     if (slow) await optional(checkSeasons)
+    if (slow) await optional(async () => checkVersions())
     if (slow) await optional(refreshStorage)
     if (seerrConfigured() && (full || now() - watchlistSyncedAt > WATCHLIST_INTERVAL)) {
       await optional(syncSeerr)

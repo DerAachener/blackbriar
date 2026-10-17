@@ -27,7 +27,7 @@ import { isImagePath, plexImage, testPlex } from './plex.ts'
 import { requestMedia, testSeerr } from './seerr.ts'
 import { getDetails, testTmdb } from './tmdb.ts'
 import { ignoreMismatch, plexMismatches } from './mismatch.ts'
-import { dismissNotice, openNotices, unmonitorNotice } from './notices.ts'
+import { deleteVersion, dismissNotice, openNotices, unmonitorNotice } from './notices.ts'
 import { backupStatus } from './backup.ts'
 import { events, logEvent } from './events.ts'
 import { dashboard } from './dashboard.ts'
@@ -168,6 +168,17 @@ export function registerRoutes(app: FastifyInstance): void {
   app.post<{ Params: { id: string } }>('/api/notices/:id/unmonitor', async (req, reply) => {
     try {
       const message = await unmonitorNotice(Number(req.params.id))
+      return { message, items: openNotices() }
+    } catch (err) {
+      return reply.code(400).send({ error: (err as Error).message })
+    }
+  })
+
+  app.post<{ Params: { id: string }; Body: { mediaId?: number } }>('/api/notices/:id/delete-version', async (req, reply) => {
+    try {
+      const message = await deleteVersion(Number(req.params.id), Number(req.body?.mediaId), currentUser(req))
+      // Plex hat die Datei entfernt; Größe und Angaben in der Bibliothek beim nächsten Abgleich neu lesen
+      syncSoon(true)
       return { message, items: openNotices() }
     } catch (err) {
       return reply.code(400).send({ error: (err as Error).message })

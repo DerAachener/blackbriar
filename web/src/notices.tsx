@@ -1,19 +1,20 @@
 import { useState } from 'react'
-import { EyeOff, ExternalLink, PackageCheck, Shuffle } from 'lucide-react'
-import { api, useApi, type Notice } from './api'
+import { Copy, EyeOff, ExternalLink, PackageCheck, Shuffle, Trash2 } from 'lucide-react'
+import { api, useApi, type Notice, type NoticeVersion } from './api'
 import { t } from './i18n'
-import { Poster } from './ui'
+import { fileResolution, fmtSize, meta, Poster } from './ui'
 
 /** Hinweise zu Serien: Staffel komplett oder Folgen von verschiedenen Release-Gruppen; erscheint nur, wenn es welche gibt. */
 export function SeasonNotices() {
-  const { data, reload } = useApi<Notice[]>('/notices', 300_000)
+  const { data: all, reload } = useApi<Notice[]>('/notices', 300_000)
+  const data = all?.filter((n) => n.kind !== 'versions')
   const [busy, setBusy] = useState<number | null>(null)
   const [error, setError] = useState('')
   // Bei vielen Hinweisen stehen zunächst nur die ersten da, sonst verdrängt der Abschnitt den Rest des Dashboards
-  const [all, setAll] = useState(false)
+  const [expanded, setExpanded] = useState(false)
   if (!data?.length) return null
   const FIRST = 3
-  const shown = all ? data : data.slice(0, FIRST)
+  const shown = expanded ? data : data.slice(0, FIRST)
 
   const act = (id: number, what: 'ignore' | 'unmonitor') => {
     setBusy(id)
@@ -86,8 +87,126 @@ export function SeasonNotices() {
         ))}
       </ul>
       {data.length > FIRST && (
-        <button onClick={() => setAll(!all)} className="text-sm text-sky-200 hover:underline">
-          {all ? t('Weniger anzeigen') : t('{n} weitere anzeigen', { n: data.length - FIRST })}
+        <button onClick={() => setExpanded(!expanded)} className="text-sm text-sky-200 hover:underline">
+          {expanded ? t('Weniger anzeigen') : t('{n} weitere anzeigen', { n: data.length - FIRST })}
+        </button>
+      )}
+    </section>
+  )
+}
+
+/** Eine Datei eines Films mit ihren Angaben; die umgewandelte ist markiert. */
+function VersionLine({ v }: { v: NoticeVersion }) {
+  const audio = [v.audio_codec?.toUpperCase(), v.audio_channels ? `${v.audio_channels} ${t('Kanäle')}` : ''].filter(Boolean).join(' ')
+  return (
+    <span className="min-w-0">
+      <span className="flex flex-wrap items-center gap-2">
+        <span className="break-all">{v.file}</span>
+        <span
+          className={`shrink-0 rounded px-1.5 py-0.5 text-[11px] font-medium ${v.converted ? 'bg-emerald-400/15 text-emerald-300' : 'bg-zinc-800 text-zinc-400'}`}
+        >
+          {v.converted ? t('umgewandelt') : t('alt')}
+        </span>
+      </span>
+      <span className="block text-xs text-zinc-500">{meta(fmtSize(v.size), fileResolution(v.resolution), v.video_codec ?? '', audio)}</span>
+    </span>
+  )
+}
+
+/** Filme mit mehr als einer Datei in derselben Fassung, etwa nach dem Umwandeln; die alte lässt sich hier löschen. */
+export function VersionNotices() {
+  const { data: all, reload } = useApi<Notice[]>('/notices', 300_000)
+  const data = all?.filter((n) => n.kind === 'versions')
+  const [busy, setBusy] = useState<number | null>(null)
+  const [message, setMessage] = useState<{ text: string; ok: boolean }>()
+  // Wie bei den Serien: zunächst drei, der Rest lässt sich aufklappen
+  const [expanded, setExpanded] = useState(false)
+  if (!data?.length && !message) return null
+  const FIRST = 3
+  const shown = expanded ? (data ?? []) : (data ?? []).slice(0, FIRST)
+
+  const ignore = (id: number) => {
+    setBusy(id)
+    void api(`/notices/${id}/ignore`, { method: 'POST' }).finally(() => {
+      setBusy(null)
+      reload()
+    })
+  }
+  const remove = (n: Notice, v: NoticeVersion) => {
+    if (!confirm(t('„{file}“ aus „{title}“ löschen? Die Datei wird in Plex endgültig gelöscht, die andere Version bleibt.', { file: v.file, title: n.title }))) return
+    setBusy(n.id)
+    setMessage(undefined)
+    api<{ message: string }>(`/notices/${n.id}/delete-version`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ mediaId: v.media_id }) })
+      .then((r) => setMessage({ text: `${n.title}: ${r.message}`, ok: true }))
+      .catch((err: Error) => setMessage({ text: err.message, ok: false }))
+      .finally(() => {
+        setBusy(null)
+        reload()
+      })
+  }
+
+  return (
+    <section className="space-y-3 rounded-xl border border-violet-400/30 bg-violet-400/5 p-4">
+      <div className="space-y-1">
+        <p className="font-medium text-violet-200">{t('Filme: mehrere Versionen')}</p>
+        <p className="text-sm text-zinc-400">
+          {t(
+            'Diese Filme liegen in derselben Fassung mehr als einmal vor, etwa nach dem Umwandeln. 4K und 1080p zählen getrennt. Nach dem Löschen liest Radarr den Film neu ein und übernimmt die verbliebene Datei.',
+          )}
+        </p>
+        {message && <p className={`text-sm ${message.ok ? 'text-emerald-300' : 'text-red-300'}`}>{message.text}</p>}
+      </div>
+      <ul className="space-y-2">
+        {shown.map((n) => (
+          <li key={n.id} className="flex flex-wrap items-start gap-3 rounded-lg bg-zinc-900/70 p-2">
+            <Poster thumb={n.thumb} className="w-10" />
+            <div className="min-w-0 flex-1 basis-64 space-y-2 text-sm">
+              <p className="flex items-center gap-2 font-medium">
+                <Copy size={15} className="shrink-0 text-violet-300" />
+                <span>{n.title}</span>
+              </p>
+              <ul className="space-y-1.5">
+                {n.versions?.map((v) => (
+                  <li key={v.media_id} className="flex items-start justify-between gap-3">
+                    <VersionLine v={v} />
+                    {n.canDelete && (
+                      <button
+                        onClick={() => remove(n, v)}
+                        disabled={busy === n.id}
+                        title={t('Diese Version löschen')}
+                        aria-label={t('Diese Version löschen')}
+                        className={`shrink-0 rounded-md p-1.5 transition disabled:opacity-50 ${v.converted ? 'text-zinc-600 hover:bg-zinc-800 hover:text-zinc-300' : 'text-red-300 hover:bg-red-500/15'}`}
+                      >
+                        <Trash2 size={15} />
+                      </button>
+                    )}
+                  </li>
+                ))}
+              </ul>
+              {!n.canDelete && <p className="text-xs text-zinc-500">{t('Löschen ist in den Einstellungen unter Bibliothek ausgeschaltet; die alte Version kannst du dann in Plex löschen.')}</p>}
+            </div>
+            <div className="flex shrink-0 items-center gap-1">
+              {n.url && (
+                <a href={n.url} target="_blank" rel="noreferrer" title={t('In Radarr öffnen')} aria-label={t('In Radarr öffnen')} className="rounded-md p-2 text-zinc-500 transition hover:bg-zinc-800 hover:text-zinc-300">
+                  <ExternalLink size={16} />
+                </a>
+              )}
+              <button
+                onClick={() => ignore(n.id)}
+                disabled={busy === n.id}
+                title={t('Hinweis ausblenden')}
+                aria-label={t('Hinweis ausblenden')}
+                className="rounded-md p-2 text-zinc-500 transition hover:bg-zinc-800 hover:text-zinc-300 disabled:opacity-50"
+              >
+                <EyeOff size={16} />
+              </button>
+            </div>
+          </li>
+        ))}
+      </ul>
+      {(data?.length ?? 0) > FIRST && (
+        <button onClick={() => setExpanded(!expanded)} className="text-sm text-violet-200 hover:underline">
+          {expanded ? t('Weniger anzeigen') : t('{n} weitere anzeigen', { n: (data?.length ?? 0) - FIRST })}
         </button>
       )}
     </section>
