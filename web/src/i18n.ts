@@ -104,6 +104,7 @@ const en: Record<string, string> = {
   'Neuer Schlüssel erzeugt. Trag die neuen Adressen in Plex, Radarr und Sonarr ein.': 'New key created. Enter the new addresses in Plex, Radarr and Sonarr.',
   'Neuen Schlüssel erzeugen': 'Create new key',
   'Nach oben': 'Move up',
+  leer: 'empty',
   'Nach unten': 'Move down',
   '{name} nach oben': 'Move {name} up',
   '{name} nach unten': 'Move {name} down',

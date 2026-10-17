@@ -5,6 +5,10 @@
 What changed in Blackbriar, newest version first.
 The first number changes with larger changes that need attention when updating, the middle one with new features, the last one with fixes.
 
+## bb.1.1.1 – 2026-10-17
+
+- Settings → Plex also lists empty libraries (marked "empty"), so they can be put in place before the first title arrives. The library view still leaves them out.
+
 ## bb.1.1.0 – 2026-10-17
 
 - Settings → Plex: the libraries can be put in your own order with arrows, for example the same as in Plex. The order applies everywhere: in the library view, in the settings and on the user page. Plex does not share its sidebar order, so it has to be set once here.

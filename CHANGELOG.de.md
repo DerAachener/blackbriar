@@ -5,6 +5,10 @@
 Was sich in Blackbriar geändert hat, neueste Fassung zuerst.
 Die erste Zahl ändert sich bei größeren Umbauten, auf die man beim Update achten muss, die mittlere bei neuen Funktionen, die letzte bei Korrekturen.
 
+## bb.1.1.1 – 17.10.2026
+
+- Einstellungen → Plex zeigt auch leere Mediatheken (mit „leer“ gekennzeichnet), damit sie sich schon vor dem ersten Titel einsortieren lassen. In der Bibliothek bleiben sie weiter ausgeblendet.
+
 ## bb.1.1.0 – 17.10.2026
 
 - Einstellungen → Plex: Die Mediatheken lassen sich mit Pfeilen in eine eigene Reihenfolge bringen, etwa wie in Plex. Sie gilt überall: in der Bibliothek, in den Einstellungen und beim Benutzer. Plex gibt die Reihenfolge seiner Seitenleiste nicht heraus, deshalb stellt man sie hier einmal ein.

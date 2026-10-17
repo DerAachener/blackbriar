@@ -19,7 +19,7 @@ import { deleteMedia, recentDeletions } from './delete.ts'
 import { testTracearr } from './tracearr.ts'
 import { importStatus, startImport } from './import.ts'
 import { ARR_INSTANCES, arrConfigured, configuredArrInstances, testArr } from './arr.ts'
-import { db, excludedSections, moveSection, recordingSince, getSettings, saveConnection, saveSettings, historyTitles, setSectionIncluded, sortBySection, openItems, watchlistTitles } from './db.ts'
+import { db, excludedSections, moveSection, plexSections, recordingSince, getSettings, saveConnection, saveSettings, historyTitles, setSectionIncluded, sortBySection, openItems, watchlistTitles } from './db.ts'
 import { titleDetail } from './title.ts'
 import { addPreset, deleteTopic, presetNames, saveTopic, searchKeywords, topics, topicTitles } from './topics.ts'
 import { airingShows, cleanupCandidates, episodeCleanup, fileList, mediaStats, notInPlex, requestStates, type FileItem } from './media.ts'
@@ -247,6 +247,10 @@ export function registerRoutes(app: FastifyInstance): void {
   const sections = () => {
     const excluded = excludedSections()
     const map = new Map<string, { name: string; type: string; titles: number; size: number; included: boolean }>()
+    // Auch leere Mediatheken aus Plex, damit sie sich vorab einsortieren lassen; die Bibliothek blendet sie aus
+    for (const s of plexSections()) {
+      map.set(s.name, { name: s.name, type: s.type, titles: 0, size: 0, included: !excluded.has(s.name) })
+    }
     for (const f of fileList()) {
       if (!f.section) continue
       const s = map.get(f.section) ?? { name: f.section, type: f.type, titles: 0, size: 0, included: !excluded.has(f.section) }

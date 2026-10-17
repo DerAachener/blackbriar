@@ -733,10 +733,10 @@ function Sections() {
                 <ChevronDown size={14} />
               </button>
             </span>
-            <div className="min-w-0 flex-1">
+            <div className={`min-w-0 flex-1 ${s.titles ? '' : 'opacity-60'}`}>
               <Toggle
                 label={s.name}
-                hint={meta(s.type === 'show' ? t('Serien') : t('Filme'), t('{n} Titel', { n: num(s.titles) }), fmtSize(s.size))}
+                hint={meta(s.type === 'show' ? t('Serien') : t('Filme'), s.titles ? t('{n} Titel', { n: num(s.titles) }) : t('leer'), s.titles ? fmtSize(s.size) : '')}
                 checked={s.included}
                 onChange={(v) => set(s.name, v)}
               />

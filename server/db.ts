@@ -757,6 +757,16 @@ export function sectionOrder(): string[] {
   return parseList(getSetting('section_order')) ?? []
 }
 
+/** Alle Mediatheken, die Plex beim letzten Abgleich gemeldet hat, auch leere. */
+export function plexSections(): { name: string; type: string }[] {
+  try {
+    const list = JSON.parse(getSetting('plex_sections') ?? '[]')
+    return Array.isArray(list) ? list.filter((s) => s && typeof s.name === 'string').map((s) => ({ name: s.name, type: s.type === 'show' ? 'show' : 'movie' })) : []
+  } catch {
+    return []
+  }
+}
+
 /** Sortiert nach der eigenen Reihenfolge; was dort nicht steht, kommt alphabetisch dahinter. */
 export function sortBySection<T>(items: T[], nameOf: (item: T) => string): T[] {
   const order = sectionOrder()

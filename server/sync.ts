@@ -95,7 +95,10 @@ async function syncLibrary(): Promise<void> {
     )
   }
 
-  for (const sec of (await pms('/library/sections')).Directory ?? []) {
+  const plexSections = ((await pms('/library/sections')).Directory ?? []) as any[]
+  // Alle Mediatheken mit Namen und Art merken, auch leere: Die Einstellungen zeigen sie zum Einsortieren an
+  setSetting('plex_sections', JSON.stringify(plexSections.filter((s) => SECTION_TYPE[s.type]).map((s) => ({ name: String(s.title), type: s.type === 'show' ? 'show' : 'movie' }))))
+  for (const sec of plexSections) {
     const type = SECTION_TYPE[sec.type]
     if (!type) continue
     // Die TMDB-ID verbindet die Bibliothek mit Merkliste und Radarr, die TVDB-ID mit Sonarr

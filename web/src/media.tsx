@@ -158,9 +158,9 @@ export function FilesView() {
         onSearch={setSearch}
         info={summary.data ? meta(t('{n} Titel', { n: num(summary.data.total) }), fmtSize(summary.data.totalSize)) : ''}
       />
-      {sections.data && sections.data.length > 1 && (
+      {sections.data && sections.data.filter((s) => s.titles > 0).length > 1 && (
         <div className="flex flex-wrap gap-2">
-          {[{ name: '', titles: sections.data.reduce((n, s) => n + s.titles, 0), size: sections.data.reduce((n, s) => n + s.size, 0) }, ...sections.data].map((s) => (
+          {[{ name: '', titles: sections.data.reduce((n, s) => n + s.titles, 0), size: sections.data.reduce((n, s) => n + s.size, 0) }, ...sections.data.filter((s) => s.titles > 0)].map((s) => (
             <button
               key={s.name || 'all'}
               onClick={() => setSection(s.name)}
