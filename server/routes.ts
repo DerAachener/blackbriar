@@ -29,6 +29,7 @@ import { getDetails, testTmdb } from './tmdb.ts'
 import { ignoreMismatch, plexMismatches } from './mismatch.ts'
 import { deleteVersion, dismissNotice, openNotices, unmonitorNotice } from './notices.ts'
 import { changelog, changelogNews, markChangelogSeen } from './changelog.ts'
+import { applySharing, sharing, type SharingChange } from './sharing.ts'
 import { backupStatus } from './backup.ts'
 import { events, logEvent } from './events.ts'
 import { dashboard } from './dashboard.ts'
@@ -167,6 +168,24 @@ export function registerRoutes(app: FastifyInstance): void {
   app.post('/api/changelog/seen', (_req, reply) => {
     markChangelogSeen()
     return reply.code(204).send()
+  })
+
+  // Freigaben der Mediatheken für die Benutzer, über plex.tv
+  app.get('/api/sharing', async (_req, reply) => {
+    try {
+      return await sharing()
+    } catch (err) {
+      return reply.code(502).send({ error: (err as Error).message })
+    }
+  })
+  app.put<{ Body: { changes?: SharingChange[] } }>('/api/sharing', async (req, reply) => {
+    const changes = (req.body?.changes ?? []).map((c) => ({ userId: Number(c.userId), sectionId: Number(c.sectionId), shared: Boolean(c.shared) }))
+    if (!changes.length) return reply.code(400).send({ error: t('Nichts zu ändern.') })
+    try {
+      return { results: await applySharing(changes, currentUser(req)), ...(await sharing()) }
+    } catch (err) {
+      return reply.code(502).send({ error: (err as Error).message })
+    }
   })
 
   app.get('/api/notices', () => openNotices())

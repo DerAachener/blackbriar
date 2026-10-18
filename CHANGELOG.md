@@ -5,6 +5,12 @@
 What changed in Blackbriar, newest version first.
 The first number changes with larger changes that need attention when updating, the middle one with new features, the last one with fixes.
 
+## bb.1.5.0 – 2026-10-18
+
+- Share libraries from Blackbriar: under Settings → Plex, the share icon next to a library shows which users can see it. Tick boxes or use "Everyone" / "No one" and save. On a user page, "Edit sharing" shows all libraries for that user.
+- Blackbriar reads the current sharing from Plex right before saving and changes only the boxes you ticked; downloads, age filters and other settings of a share stay as they are. Every change asks for confirmation and is logged.
+- Users who get all libraries automatically in Plex switch to a fixed list once a library is changed for them; Blackbriar says so before saving.
+
 ## bb.1.4.0 – 2026-10-17
 
 - After an update, a "What's new" window shows once with everything since the version you last saw. It is shown once per installation, not per device, and not on a fresh installation.

@@ -15,6 +15,17 @@ async function plexFetch(url: string, token: string, accept?: string): Promise<R
   return res
 }
 
+/** Anfrage an plex.tv mit dem Token des Besitzers. Ohne Methode ein GET, das bei einem Fehler wirft; bei PUT prüft der Aufrufer die Antwort. */
+export async function plexTvRequest(url: string, options: { method?: string; body?: unknown } = {}): Promise<Response> {
+  if (!options.method) return plexFetch(url, config.plexToken)
+  return reach('plex.tv', url, {
+    method: options.method,
+    headers: { ...CLIENT_HEADERS, 'X-Plex-Token': config.plexToken, 'Content-Type': 'application/json', Accept: 'application/json' },
+    body: JSON.stringify(options.body),
+    signal: AbortSignal.timeout(30_000),
+  })
+}
+
 /** Anfrage an den Plex-Server; liefert den MediaContainer. */
 export async function pms(path: string, token = config.plexToken): Promise<any> {
   const res = await plexFetch(config.plexUrl + path, token, 'application/json')
@@ -46,7 +57,7 @@ export interface PlexUser {
   email: string
 }
 
-function xmlAttrs(tag: string): Record<string, string> {
+export function xmlAttrs(tag: string): Record<string, string> {
   const attrs: Record<string, string> = {}
   for (const m of tag.matchAll(/([\w:-]+)="([^"]*)"/g)) {
     attrs[m[1]!] = m[2]!

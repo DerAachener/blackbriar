@@ -1,10 +1,11 @@
 import { useEffect, useState, type ReactNode } from 'react'
-import { ArrowRight, Check, ChevronDown, ChevronUp, Download, LogOut, PlugZap, RefreshCw, Send, Trash2, Upload } from 'lucide-react'
+import { ArrowRight, Check, ChevronDown, ChevronUp, Download, LogOut, PlugZap, RefreshCw, Send, Share2, Trash2, Upload } from 'lucide-react'
 import { api, useApi, type ConnectionKey, type Connections, type ImportStatus, type Provider, type SectionInfo, type Settings, type Status, type User } from './api'
 import { locale, mark, t } from './i18n'
 import { LogPanel } from './log'
 import { Field } from './login'
 import { ChangelogAll } from './changelog'
+import { SharingDialog } from './sharing'
 import { NewsletterSettings, ReminderSettings } from './newsletter'
 import { ago, Badge, Button, Card, ErrorNote, fmtDate, fmtSize, meta, num, PROJECT_URL } from './ui'
 import { Heading } from './views'
@@ -715,6 +716,8 @@ function Notifications({ form, setForm, save, note, run }: FormProps) {
 /** Die Mediatheken aus Plex in eigener Reihenfolge; ausgeschaltete bleiben bei „Kann weg“, offenen Bewertungen, Erinnerungen und im Newsletter außen vor. */
 function Sections() {
   const { data, reload } = useApi<SectionInfo[]>('/sections')
+  // Vor dem frühen Ausstieg: Hooks müssen bei jedem Aufruf in derselben Reihenfolge laufen
+  const [sharing, setSharing] = useState<string>()
   if (!data?.length) return null
   const set = (name: string, included: boolean) => void api('/sections', json('PUT', { name, included })).then(reload)
   const move = (name: string, direction: 'up' | 'down') => void api('/sections/move', json('POST', { name, direction })).then(reload)
@@ -742,13 +745,23 @@ function Sections() {
                 onChange={(v) => set(s.name, v)}
               />
             </div>
+            <button
+              onClick={() => setSharing(s.name)}
+              title={t('Für wen ist „{name}“ freigegeben?', { name: s.name })}
+              aria-label={t('Freigaben für {name}', { name: s.name })}
+              className="shrink-0 rounded-md p-1.5 text-zinc-500 transition hover:bg-zinc-800 hover:text-zinc-200"
+            >
+              <Share2 size={15} />
+            </button>
           </div>
         ))}
       </Card>
       <p className="text-xs text-zinc-500">
         {t('Ausgeschaltete Mediatheken bleiben bei „Kann weg“, den offenen Bewertungen, den Erinnerungen und im Newsletter außen vor. In der Bibliothek und im Verlauf sind sie weiter zu sehen.')}{' '}
-        {t('Mit den Pfeilen legst du die Reihenfolge fest, etwa wie in Plex; sie gilt auch in der Bibliothek und beim Benutzer.')}
+        {t('Mit den Pfeilen legst du die Reihenfolge fest, etwa wie in Plex; sie gilt auch in der Bibliothek und beim Benutzer.')}{' '}
+        {t('Über das Teilen-Symbol gibst du eine Mediathek für Benutzer frei, ohne in Plex jeden einzeln zu öffnen.')}
       </p>
+      {sharing && <SharingDialog section={sharing} onClose={() => setSharing(undefined)} />}
     </section>
   )
 }

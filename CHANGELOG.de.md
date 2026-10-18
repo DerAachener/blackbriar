@@ -5,6 +5,12 @@
 Was sich in Blackbriar geändert hat, neueste Fassung zuerst.
 Die erste Zahl ändert sich bei größeren Umbauten, auf die man beim Update achten muss, die mittlere bei neuen Funktionen, die letzte bei Korrekturen.
 
+## bb.1.5.0 – 18.10.2026
+
+- Mediatheken aus Blackbriar freigeben: Unter Einstellungen → Plex zeigt das Teilen-Symbol neben einer Mediathek, welche Benutzer sie sehen. Haken setzen oder „Allen“ / „Keinem“ und speichern. Auf der Seite eines Benutzers zeigt „Freigaben bearbeiten“ alle Mediatheken für ihn.
+- Blackbriar liest die Freigaben unmittelbar vor dem Speichern frisch bei Plex und ändert nur die angeklickten Haken; Downloads, Altersfilter und andere Einstellungen einer Freigabe bleiben, wie sie sind. Jede Änderung wird bestätigt und protokolliert.
+- Benutzer, die bei Plex automatisch alle Mediatheken bekommen, wechseln mit einer Änderung auf eine feste Liste; das sagt Blackbriar vor dem Speichern.
+
 ## bb.1.4.0 – 17.10.2026
 
 - Nach einem Update erscheint einmal ein Fenster „Was ist neu“ mit allem seit der zuletzt gesehenen Fassung. Es kommt einmal je Installation, nicht je Gerät, und nicht bei einer frischen Installation.

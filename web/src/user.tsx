@@ -1,9 +1,10 @@
 import { useState } from 'react'
-import { ArrowLeft } from 'lucide-react'
+import { ArrowLeft, Share2 } from 'lucide-react'
 import { api, type User } from './api'
 import { t } from './i18n'
 import { StatsView } from './stats'
 import { ago, Badge, Card, Chips, num } from './ui'
+import { SharingDialog } from './sharing'
 import { OpenView } from './media'
 import { HistoryView, RatingsView, WatchlistView } from './views'
 
@@ -22,6 +23,7 @@ export function UserView({
   onChange: () => void
 }) {
   const [section, setSection] = useState<Section>('open')
+  const [sharing, setSharing] = useState(false)
   const figures: [string, string, string][] = [
     [t('Gesehen'), num(user.plays), ''],
     [t('Bewertet'), num(user.ratings), ''],
@@ -59,10 +61,24 @@ export function UserView({
           </label>
         )}
       </div>
-      {user.sections.length > 0 && (
-        <p className="text-sm text-zinc-500">
-          {t('Zugriff auf: {names}', { names: user.sections.join(', ') })}
+      {(user.sections.length > 0 || !user.is_owner) && (
+        <p className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-zinc-500">
+          {user.sections.length > 0 && <span>{t('Zugriff auf: {names}', { names: user.sections.join(', ') })}</span>}
+          {!user.is_owner && (
+            <button onClick={() => setSharing(true)} className="inline-flex items-center gap-1 text-sky-300 hover:underline">
+              <Share2 size={13} /> {t('Freigaben bearbeiten')}
+            </button>
+          )}
         </p>
+      )}
+      {sharing && (
+        <SharingDialog
+          userId={user.id}
+          onClose={() => {
+            setSharing(false)
+            onChange()
+          }}
+        />
       )}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         {figures.map(([label, value, tone]) => (
