@@ -5,6 +5,13 @@
 Was sich in Blackbriar geändert hat, neueste Fassung zuerst.
 Die erste Zahl ändert sich bei größeren Umbauten, auf die man beim Update achten muss, die mittlere bei neuen Funktionen, die letzte bei Korrekturen.
 
+## bb.1.5.1 – 19.10.2026
+
+- „Staffel komplett“ zählt die Folgen jetzt in Sonarr, das die Staffeln wie Plex nummeriert. TMDB zählt manche Serien anders (Staffel 1 dort ist Staffel 2 in Sonarr), dadurch fielen komplette Staffeln durch. TMDB hält einen Hinweis nur noch zurück, wenn es die Staffel mindestens so groß kennt und dort noch eine Folge angekündigt ist.
+- Nach dem Update prüft Blackbriar dafür einmal alle Staffeln auf dem Server, still und ohne Telegram. Dabei können viele Hinweise auf einmal kommen.
+- Neuer Knopf „Alle auf „nicht beobachtet“ setzen“ über den Staffel-Hinweisen, mit Rückfrage. Sonarr bekommt je Serie einen Durchgang für alle ihre Staffeln.
+- Offene Hinweise „Staffel komplett“ erledigen sich selbst, wenn Folgen gelöscht wurden, die Serie nicht mehr in Plex oder Sonarr steht oder die Staffel schon unbeobachtet ist. Der Knopf bei einem veralteten Hinweis sagt jetzt, woran es lag, statt „steht nicht mehr in Sonarr“.
+
 ## bb.1.5.0 – 18.10.2026
 
 - Mediatheken aus Blackbriar freigeben: Unter Einstellungen → Plex zeigt das Teilen-Symbol neben einer Mediathek, welche Benutzer sie sehen. Haken setzen oder „Allen“ / „Keinem“ und speichern. Auf der Seite eines Benutzers zeigt „Freigaben bearbeiten“ alle Mediatheken für ihn.

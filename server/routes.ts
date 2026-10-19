@@ -27,7 +27,7 @@ import { isImagePath, plexImage, testPlex } from './plex.ts'
 import { requestMedia, testSeerr } from './seerr.ts'
 import { getDetails, testTmdb } from './tmdb.ts'
 import { ignoreMismatch, plexMismatches } from './mismatch.ts'
-import { deleteVersion, dismissNotice, openNotices, unmonitorNotice } from './notices.ts'
+import { deleteVersion, dismissNotice, openNotices, unmonitorAllNotices, unmonitorNotice } from './notices.ts'
 import { changelog, changelogNews, markChangelogSeen } from './changelog.ts'
 import { applySharing, sharing, type SharingChange } from './sharing.ts'
 import { backupStatus } from './backup.ts'
@@ -192,6 +192,14 @@ export function registerRoutes(app: FastifyInstance): void {
   app.post<{ Params: { id: string } }>('/api/notices/:id/ignore', (req) => {
     dismissNotice(Number(req.params.id))
     return openNotices()
+  })
+  app.post('/api/notices/unmonitor-all', async (req, reply) => {
+    try {
+      const message = await unmonitorAllNotices(currentUser(req))
+      return { message, items: openNotices() }
+    } catch (err) {
+      return reply.code(400).send({ error: (err as Error).message })
+    }
   })
   app.post<{ Params: { id: string } }>('/api/notices/:id/unmonitor', async (req, reply) => {
     try {

@@ -1,4 +1,4 @@
-import { arrInstance, arrLink, getSeriesFiles, rescanArr, unmonitorSeason } from './arr.ts'
+import { arrInstance, arrLink, getSeriesFiles, rescanArr, unmonitorSeason, type SeriesFiles } from './arr.ts'
 import { telegramConfigured, tmdbConfigured } from './config.ts'
 import { db, getSetting, getSettings, now, setSetting } from './db.ts'
 import { logEvent } from './events.ts'
@@ -6,7 +6,7 @@ import { t } from './i18n.ts'
 import { fileList } from './media.ts'
 import { plexDelete } from './plex.ts'
 import { escapeHtml, sendTelegram } from './telegram.ts'
-import { getSeasonPlan } from './tmdb.ts'
+import { getSeasonPlan, type SeasonPlan } from './tmdb.ts'
 
 // Hinweise für den Besitzer zu Serien, die gerade Folgen bekommen:
 //  - Eine Staffel ist komplett und könnte in Sonarr auf „nicht beobachtet“.
@@ -94,80 +94,116 @@ async function announce(html: string, thumb: string | null, silent: boolean): Pr
   await sendTelegram(html, thumb).catch((err) => console.error(t('Hinweis nicht per Telegram verschickt:'), (err as Error).message))
 }
 
+/**
+ * Ist die Staffel vollständig? Gezählt wird nach Sonarr, denn Sonarr nummeriert die Staffeln wie Plex; TMDB zählt manche
+ * Serien anders (Staffel 1 dort ist Staffel 2 hier). TMDB bremst nur, wenn es die Staffel mindestens so groß kennt
+ * und dort noch eine Folge angekündigt ist. Gibt die Zahl der Folgen zurück oder null.
+ */
+export function completeSeason(sonarr: SeriesFiles, season: number, onServer: number, plan: SeasonPlan | null): number | null {
+  if (sonarr.seasons.get(season) === false) return null
+  const episodes = sonarr.episodes.filter((e) => e.season === season && e.episode > 0)
+  if (!episodes.length || episodes.some((e) => !e.hasFile)) return null
+  // Ohne Sendedatum oder mit einem in der Zukunft kommt noch etwas
+  if (episodes.some((e) => !e.airDate || Date.parse(e.airDate) > Date.now())) return null
+  // Was Sonarr als vorhanden führt, muss auch in Plex liegen
+  if (onServer < episodes.length) return null
+  const tmdbCount = plan?.episodes.get(season) ?? 0
+  if (plan && plan.airing === season && tmdbCount >= episodes.length) return null
+  return episodes.length
+}
+
+interface SeasonCheck {
+  rating_key: number
+  season: number
+  /** Folgen kamen gerade an: Ein Hinweis „Staffel komplett“ darf neu entstehen */
+  fresh: boolean
+  /** Release-Gruppen prüfen */
+  groups: boolean
+  /** Ohne Telegram-Nachricht */
+  silent: boolean
+}
+
 /** Prüft die Serien, die zuletzt Folgen bekommen haben, und legt neue Hinweise an. Läuft im Abgleich mit. */
 export async function checkSeasons(): Promise<void> {
   // Beim allerersten Lauf entstehen die Hinweise ohne Telegram-Nachricht: Was schon da ist, wäre sonst eine Flut
   const first = !getSetting('notices_started')
+  // Seit bb.1.5.1 zählt Sonarr die Folgen. Einmal werden dafür alle Staffeln auf dem Server geprüft, still und ohne Release-Gruppen
+  const catchUp = !getSetting('notices_sonarr_count')
   const marker = getSettings().convertedMarker
-  const recent = db
-    .prepare(
-      `SELECT f.item_key AS rating_key, f.season, MAX(f.episode) AS last_episode FROM media_files f
-       WHERE f.rating_key <> f.item_key AND f.season > 0 AND f.added_at > ?
-       GROUP BY f.item_key, f.season`,
-    )
-    .all(now() - WINDOW)
-  // Offene Hinweise zu Release-Gruppen werden mitgeprüft, damit sie verschwinden, sobald die Folge ersetzt ist
-  const pendingGroups = db.prepare("SELECT rating_key, season FROM notices WHERE kind = 'groups' AND state = 'open'").all()
-  const seasons = new Map<string, { rating_key: number; season: number; fresh: boolean }>()
-  for (const r of recent) seasons.set(`${r.rating_key}:${r.season}`, { rating_key: r.rating_key as number, season: r.season as number, fresh: true })
-  for (const r of pendingGroups) {
+  const seasonsSince = db.prepare(
+    `SELECT f.item_key AS rating_key, f.season FROM media_files f
+     WHERE f.rating_key <> f.item_key AND f.season > 0 AND f.added_at > ?
+     GROUP BY f.item_key, f.season`,
+  )
+  const seasons = new Map<string, SeasonCheck>()
+  const add = (r: Record<string, unknown>, check: Omit<SeasonCheck, 'rating_key' | 'season'>) => {
     const key = `${r.rating_key}:${r.season}`
-    if (!seasons.has(key)) seasons.set(key, { rating_key: r.rating_key as number, season: r.season as number, fresh: false })
+    if (!seasons.has(key)) seasons.set(key, { rating_key: r.rating_key as number, season: r.season as number, ...check })
   }
-  if (!seasons.size) {
-    if (first) setSetting('notices_started', String(now()))
-    return
-  }
+  for (const r of seasonsSince.all(now() - WINDOW)) add(r, { fresh: true, groups: true, silent: first })
+  // Offene Hinweise werden mitgeprüft, damit sie verschwinden, sobald sie nicht mehr stimmen
+  for (const r of db.prepare("SELECT rating_key, season FROM notices WHERE kind = 'groups' AND state = 'open'").all()) add(r, { fresh: false, groups: true, silent: true })
+  for (const r of db.prepare("SELECT rating_key, season FROM notices WHERE kind = 'complete' AND state = 'open'").all()) add(r, { fresh: false, groups: false, silent: true })
+  if (catchUp) for (const r of seasonsSince.all(0)) add(r, { fresh: true, groups: false, silent: true })
 
   const library = new Map(fileList().map((f) => [f.rating_key, f]))
   const tmdbOf = db.prepare('SELECT tmdb_id FROM library_items WHERE rating_key = ?')
-  const lastOnServer = db.prepare('SELECT MAX(episode) AS last FROM media_files WHERE item_key = ? AND rating_key <> item_key AND season = ?')
+  const onServer = db.prepare('SELECT COUNT(DISTINCT episode) AS n FROM media_files WHERE item_key = ? AND rating_key <> item_key AND season = ? AND episode > 0')
   const exists = db.prepare('SELECT state FROM notices WHERE key = ?')
   const insert = db.prepare('INSERT OR IGNORE INTO notices (key, kind, rating_key, season, title, detail, data, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)')
   // Hinweise zu Release-Gruppen von vor bb.0.18.4 bekommen ihre Zahlen beim nächsten Durchlauf nachgetragen
   const fillData = db.prepare("UPDATE notices SET data = ? WHERE key = ? AND data IS NULL AND state = 'open'")
-  const sonarrCache = new Map<number, Awaited<ReturnType<typeof getSeriesFiles>> | null>()
+  const closeComplete = db.prepare("UPDATE notices SET state = 'done' WHERE kind = 'complete' AND rating_key = ? AND season = ? AND state = 'open'")
+  const sonarrCache = new Map<number, SeriesFiles | null>()
 
   for (const s of seasons.values()) {
     const item = library.get(s.rating_key)
     // Ohne Sonarr gibt es weder Release-Gruppen noch etwas, das sich auf „nicht beobachtet“ stellen ließe
     const entry = item?.arr.find((a) => arrInstance(a.instance)?.app === 'sonarr')
-    if (!item || !entry) continue
+    if (!item || !entry) {
+      closeComplete.run(s.rating_key, s.season)
+      continue
+    }
     if (!sonarrCache.has(s.rating_key)) {
       sonarrCache.set(s.rating_key, await getSeriesFiles(arrInstance(entry.instance)!, entry.id).catch(() => null))
     }
     const sonarr = sonarrCache.get(s.rating_key)
+    // Antwortet Sonarr nicht, bleibt alles, wie es ist
     if (!sonarr) continue
     const seasonName = t('Staffel {n}', { n: s.season })
 
     // Release-Gruppen
-    const mix = groupOutliers(sonarr.files.filter((f) => f.season === s.season), marker)
-    const groupKeyPrefix = `groups:${s.rating_key}:${s.season}:`
-    if (mix?.outliers.length) {
-      // Der Schlüssel enthält die abweichenden Folgen: Kommt eine weitere dazu, ist das ein neuer Hinweis
-      const key = groupKeyPrefix + mix.outliers.map((o) => `${o.episode}=${o.group.toLowerCase()}`).join(',')
-      const data = groupData(mix)
-      if (exists.get(key)) fillData.run(JSON.stringify(data), key)
-      else {
-        const detail = noticeText(data)
-        // Ältere Fassungen desselben Hinweises ablösen
+    if (s.groups) {
+      const mix = groupOutliers(sonarr.files.filter((f) => f.season === s.season), marker)
+      const groupKeyPrefix = `groups:${s.rating_key}:${s.season}:`
+      if (mix?.outliers.length) {
+        // Der Schlüssel enthält die abweichenden Folgen: Kommt eine weitere dazu, ist das ein neuer Hinweis
+        const key = groupKeyPrefix + mix.outliers.map((o) => `${o.episode}=${o.group.toLowerCase()}`).join(',')
+        const data = groupData(mix)
+        if (exists.get(key)) fillData.run(JSON.stringify(data), key)
+        else {
+          const detail = noticeText(data)
+          // Ältere Fassungen desselben Hinweises ablösen
+          db.prepare("UPDATE notices SET state = 'done' WHERE kind = 'groups' AND rating_key = ? AND season = ? AND state = 'open'").run(s.rating_key, s.season)
+          insert.run(key, 'groups', s.rating_key, s.season, item.title, detail, JSON.stringify(data), now())
+          logEvent('sync', `${item.title} · ${seasonName}: ${detail}`, 'warn')
+          await announce(`⚠️ <b>${escapeHtml(item.title)}</b> · ${escapeHtml(seasonName)}: ${escapeHtml(t('gemischte Release-Gruppen'))}\n${escapeHtml(detail)}`, item.thumb, s.silent)
+        }
+      } else {
         db.prepare("UPDATE notices SET state = 'done' WHERE kind = 'groups' AND rating_key = ? AND season = ? AND state = 'open'").run(s.rating_key, s.season)
-        insert.run(key, 'groups', s.rating_key, s.season, item.title, detail, JSON.stringify(data), now())
-        logEvent('sync', `${item.title} · ${seasonName}: ${detail}`, 'warn')
-        await announce(`⚠️ <b>${escapeHtml(item.title)}</b> · ${escapeHtml(seasonName)}: ${escapeHtml(t('gemischte Release-Gruppen'))}\n${escapeHtml(detail)}`, item.thumb, first)
       }
-    } else {
-      db.prepare("UPDATE notices SET state = 'done' WHERE kind = 'groups' AND rating_key = ? AND season = ? AND state = 'open'").run(s.rating_key, s.season)
     }
 
-    // Staffel komplett: nur bei frisch angekommenen Folgen und nur, solange Sonarr die Staffel noch beobachtet
-    if (!s.fresh || !tmdbConfigured() || sonarr.seasons.get(s.season) === false) continue
-    const tmdbId = tmdbOf.get(s.rating_key)?.tmdb_id as number | null | undefined
-    if (!tmdbId) continue
-    const plan = await getSeasonPlan(tmdbId).catch(() => null)
-    const total = plan?.episodes.get(s.season) ?? 0
-    const last = Number(lastOnServer.get(s.rating_key, s.season)?.last ?? 0)
-    if (!plan || total === 0 || last < total || plan.airing === s.season) continue
+    // Staffel komplett, solange Sonarr sie noch beobachtet
+    const tmdbId = tmdbConfigured() ? (tmdbOf.get(s.rating_key)?.tmdb_id as number | null | undefined) : null
+    const plan = tmdbId ? await getSeasonPlan(tmdbId).catch(() => null) : null
+    const total = completeSeason(sonarr, s.season, Number(onServer.get(s.rating_key, s.season)?.n ?? 0), plan)
+    if (!total) {
+      // Gelöschte Folgen, Staffel schon unbeobachtet o. Ä.: Ein offener Hinweis stimmt nicht mehr
+      closeComplete.run(s.rating_key, s.season)
+      continue
+    }
+    if (!s.fresh) continue
     const key = `complete:${s.rating_key}:${s.season}`
     if (exists.get(key)) continue
     const data: NoticeData = { total }
@@ -176,10 +212,11 @@ export async function checkSeasons(): Promise<void> {
     await announce(
       `📦 <b>${escapeHtml(item.title)}</b> · ${escapeHtml(t('{season} ist komplett', { season: seasonName }))}\n${escapeHtml(t('In Blackbriar kannst du sie in Sonarr auf „nicht beobachtet“ setzen.'))}`,
       item.thumb,
-      first,
+      s.silent,
     )
   }
   if (first) setSetting('notices_started', String(now()))
+  if (catchUp) setSetting('notices_sonarr_count', String(now()))
 }
 
 // ---------- Doppelte Versionen bei Filmen ----------
@@ -378,13 +415,53 @@ export function dismissNotice(id: number): void {
   db.prepare("UPDATE notices SET state = 'ignored' WHERE id = ?").run(id)
 }
 
+/**
+ * Stellt die Staffeln aller offenen Hinweise „Staffel komplett“ auf „nicht beobachtet“. Je Serie ein Durchgang für alle
+ * ihre Staffeln. Veraltete Hinweise werden nur erledigt; was Sonarr ablehnt, bleibt als Hinweis offen.
+ */
+export async function unmonitorAllNotices(user: string): Promise<string> {
+  const notices = db.prepare("SELECT id, rating_key, season, title FROM notices WHERE kind = 'complete' AND state = 'open'").all()
+  const library = new Map(fileList().map((f) => [f.rating_key, f]))
+  const bySeries = new Map<number, typeof notices>()
+  for (const n of notices) bySeries.set(n.rating_key as number, [...(bySeries.get(n.rating_key as number) ?? []), n])
+  const done = db.prepare("UPDATE notices SET state = 'done' WHERE id = ?")
+  let seasons = 0
+  let stale = 0
+  const failed: string[] = []
+  for (const [ratingKey, list] of bySeries) {
+    const entries = (library.get(ratingKey)?.arr ?? []).filter((a) => arrInstance(a.instance)?.app === 'sonarr')
+    if (!entries.length) {
+      for (const n of list) done.run(n.id)
+      stale += list.length
+      continue
+    }
+    try {
+      for (const entry of entries) await unmonitorSeason(arrInstance(entry.instance)!, entry.id, list.map((n) => n.season as number))
+      for (const n of list) done.run(n.id)
+      seasons += list.length
+    } catch (err) {
+      failed.push(`${list[0]!.title}: ${(err as Error).message}`)
+    }
+  }
+  const parts = [t('{n} Staffeln stehen in Sonarr auf „nicht beobachtet“', { n: seasons })]
+  if (stale) parts.push(t('{n} veraltete Hinweise erledigt', { n: stale }))
+  if (failed.length) parts.push(t('nicht geklappt: {list}', { list: failed.join('; ') }))
+  const message = parts.join(' · ')
+  logEvent('settings', `${message} · ${user}`, failed.length ? 'warn' : 'info')
+  return message
+}
+
 /** Stellt die Staffel eines Hinweises in allen Sonarr-Instanzen auf „nicht beobachtet“ und erledigt ihn damit. */
 export async function unmonitorNotice(id: number): Promise<string> {
   const notice = db.prepare("SELECT kind, rating_key, season, title FROM notices WHERE id = ? AND state = 'open'").get(id)
   if (!notice) throw new Error(t('Diesen Hinweis gibt es nicht mehr.'))
   const item = fileList().find((f) => f.rating_key === notice.rating_key)
   const entries = (item?.arr ?? []).filter((a) => arrInstance(a.instance)?.app === 'sonarr')
-  if (!entries.length) throw new Error(t('Die Serie steht nicht mehr in Sonarr.'))
+  // Ein veralteter Hinweis: Er wird erledigt, und die Meldung sagt, woran es lag
+  if (!item || !entries.length) {
+    db.prepare("UPDATE notices SET state = 'done' WHERE id = ?").run(id)
+    throw new Error(item ? t('Die Serie steht nicht in Sonarr. Der Hinweis ist erledigt.') : t('Die Serie ist nicht mehr in Plex. Der Hinweis ist erledigt.'))
+  }
   for (const entry of entries) await unmonitorSeason(arrInstance(entry.instance)!, entry.id, notice.season as number)
   db.prepare("UPDATE notices SET state = 'done' WHERE id = ?").run(id)
   const message = t('{title} · Staffel {n} steht in {where} auf „nicht beobachtet“', { title: notice.title as string, n: notice.season as number, where: entries.map((e) => e.name).join(', ') })

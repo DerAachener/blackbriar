@@ -374,7 +374,11 @@ const en: Record<string, string> = {
   '{season} ist komplett': '{season} is complete',
   'In Blackbriar kannst du sie in Sonarr auf „nicht beobachtet“ setzen.': 'In Blackbriar you can set it to unmonitored in Sonarr.',
   'Diesen Hinweis gibt es nicht mehr.': 'This notice no longer exists.',
-  'Die Serie steht nicht mehr in Sonarr.': 'The series is no longer in Sonarr.',
+  'Die Serie steht nicht in Sonarr. Der Hinweis ist erledigt.': 'The series is not in Sonarr. The notice is closed.',
+  'Die Serie ist nicht mehr in Plex. Der Hinweis ist erledigt.': 'The series is no longer in Plex. The notice is closed.',
+  '{n} Staffeln stehen in Sonarr auf „nicht beobachtet“': '{n} seasons set to unmonitored in Sonarr',
+  '{n} veraltete Hinweise erledigt': '{n} outdated notices closed',
+  'nicht geklappt: {list}': 'failed: {list}',
   '{title} · Staffel {n} steht in {where} auf „nicht beobachtet“': '{title} · season {n} is set to unmonitored in {where}',
   'Solange das so ist, hält Seerr den Titel für fehlend und fragt ihn erneut an. Abhilfe in Plex: beim Titel ⋯ → Übereinstimmung korrigieren.':
     'As long as this is the case, Seerr considers the title missing and requests it again. To fix it in Plex: on the title ⋯ → Fix Match.',

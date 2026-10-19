@@ -536,6 +536,8 @@ const en: Record<string, string> = {
   'Serien: Staffeln und Release-Gruppen': 'Series: seasons and release groups',
   'Komplette Staffeln kannst du in Sonarr auf „nicht beobachtet“ setzen, damit Sonarr nichts mehr daran austauscht. Bei gemischten Release-Gruppen zählt die Gruppe mit den meisten Folgen der Staffel.': 'You can set complete seasons to unmonitored in Sonarr so that Sonarr no longer replaces anything in them. With mixed release groups, the group with the most episodes of the season counts.',
   'Auf „nicht beobachtet“ setzen': 'Set to unmonitored',
+  'Alle {n} auf „nicht beobachtet“ setzen': 'Set all {n} to unmonitored',
+  '{n} komplette Staffeln in Sonarr auf „nicht beobachtet“ setzen? Sonarr sucht und tauscht dort dann nichts mehr.': 'Set {n} complete seasons to unmonitored in Sonarr? Sonarr will no longer search or replace anything in them.',
   'In Sonarr öffnen': 'Open in Sonarr',
   'Weniger anzeigen': 'Show less',
   'mehr anzeigen': 'show more',

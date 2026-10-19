@@ -69,6 +69,8 @@ export interface SeriesFiles {
   seasons: Map<number, boolean>
   /** Vorhandene Folgen mit der Release-Gruppe ihrer Datei; leer, wenn Sonarr keine kennt */
   files: { season: number; episode: number; group: string }[]
+  /** Alle Folgen, die Sonarr kennt, mit Sendedatum; daran lässt sich erkennen, ob eine Staffel vollständig ist */
+  episodes: { season: number; episode: number; hasFile: boolean; airDate: string | null }[]
 }
 
 /** Was Sonarr zu den Dateien einer Serie weiß: Release-Gruppe je Folge und ob die Staffeln beobachtet werden. */
@@ -84,18 +86,25 @@ export async function getSeriesFiles(instance: ArrInstance, seriesId: number): P
     files: (episodes ?? [])
       .filter((e) => e.episodeFileId)
       .map((e) => ({ season: Number(e.seasonNumber), episode: Number(e.episodeNumber), group: groupOf.get(e.episodeFileId) ?? '' })),
+    episodes: (episodes ?? []).map((e) => ({
+      season: Number(e.seasonNumber),
+      episode: Number(e.episodeNumber),
+      hasFile: Boolean(e.episodeFileId),
+      airDate: e.airDateUtc ? String(e.airDateUtc) : null,
+    })),
   }
 }
 
-/** Stellt eine ganze Staffel auf „nicht beobachtet“: alle ihre Folgen und den Schalter der Staffel. */
-export async function unmonitorSeason(instance: ArrInstance, seriesId: number, season: number): Promise<void> {
+/** Stellt ganze Staffeln einer Serie auf „nicht beobachtet“: alle ihre Folgen und den Schalter der Staffel. */
+export async function unmonitorSeason(instance: ArrInstance, seriesId: number, season: number | number[]): Promise<void> {
+  const seasons = new Set(Array.isArray(season) ? season : [season])
   const all = (await arr(instance, `/episode?seriesId=${seriesId}`)) as any[]
-  const ids = all.filter((e) => e.monitored && e.seasonNumber === season).map((e) => e.id)
+  const ids = all.filter((e) => e.monitored && seasons.has(e.seasonNumber)).map((e) => e.id)
   if (ids.length) await arr(instance, '/episode/monitor', 'PUT', { episodeIds: ids, monitored: false })
   const series = await arr(instance, `/series/${seriesId}`)
-  const entry = (series.seasons ?? []).find((s: any) => s.seasonNumber === season)
-  if (entry?.monitored) {
-    entry.monitored = false
+  const entries = (series.seasons ?? []).filter((s: any) => s.monitored && seasons.has(s.seasonNumber))
+  if (entries.length) {
+    for (const entry of entries) entry.monitored = false
     await arr(instance, `/series/${seriesId}`, 'PUT', series)
   }
 }

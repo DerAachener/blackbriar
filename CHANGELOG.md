@@ -5,6 +5,13 @@
 What changed in Blackbriar, newest version first.
 The first number changes with larger changes that need attention when updating, the middle one with new features, the last one with fixes.
 
+## bb.1.5.1 – 2026-10-19
+
+- "Season complete" now counts the episodes in Sonarr, which numbers seasons the same way as Plex. TMDB numbers some shows differently (its season 1 is season 2 in Sonarr), so complete seasons were missed. TMDB only holds a notice back when it knows the season with at least as many episodes and still lists an upcoming one.
+- After the update, Blackbriar checks every season on the server once for this, quietly and without Telegram. This can bring up many notices at once.
+- New button "Set all to unmonitored" above the season notices, with confirmation. Sonarr gets one request round per series for all its seasons.
+- Open "season complete" notices close on their own when episodes were deleted, the series left Plex or Sonarr, or the season is already unmonitored. The button on an outdated notice now says what happened instead of "no longer in Sonarr".
+
 ## bb.1.5.0 – 2026-10-18
 
 - Share libraries from Blackbriar: under Settings → Plex, the share icon next to a library shows which users can see it. Tick boxes or use "Everyone" / "No one" and save. On a user page, "Edit sharing" shows all libraries for that user.

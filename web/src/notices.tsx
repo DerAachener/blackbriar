@@ -12,7 +12,9 @@ export function SeasonNotices() {
   const [error, setError] = useState('')
   // Bei vielen Hinweisen stehen zunächst nur die ersten da, sonst verdrängt der Abschnitt den Rest des Dashboards
   const [expanded, setExpanded] = useState(false)
+  const [result, setResult] = useState('')
   if (!data?.length) return null
+  const complete = data.filter((n) => n.kind === 'complete').length
   const FIRST = 3
   const shown = expanded ? data : data.slice(0, FIRST)
 
@@ -20,6 +22,20 @@ export function SeasonNotices() {
     setBusy(id)
     setError('')
     void api(`/notices/${id}/${what}`, { method: 'POST' })
+      .catch((err: Error) => setError(err.message))
+      .finally(() => {
+        setBusy(null)
+        reload()
+      })
+  }
+
+  const unmonitorAll = () => {
+    if (!confirm(t('{n} komplette Staffeln in Sonarr auf „nicht beobachtet“ setzen? Sonarr sucht und tauscht dort dann nichts mehr.', { n: complete }))) return
+    setBusy(-1)
+    setError('')
+    setResult('')
+    void api<{ message: string }>('/notices/unmonitor-all', { method: 'POST' })
+      .then((r) => setResult(r.message))
       .catch((err: Error) => setError(err.message))
       .finally(() => {
         setBusy(null)
@@ -37,6 +53,16 @@ export function SeasonNotices() {
           )}
         </p>
         {error && <p className="text-sm text-red-300">{error}</p>}
+        {result && <p className="text-sm text-emerald-300">{result}</p>}
+        {complete > 1 && (
+          <button
+            onClick={unmonitorAll}
+            disabled={busy !== null}
+            className="mt-1 rounded-md bg-sky-500/20 px-3 py-1.5 text-sm text-sky-100 transition hover:bg-sky-500/30 disabled:opacity-50"
+          >
+            {busy === -1 ? t('Einen Moment …') : t('Alle {n} auf „nicht beobachtet“ setzen', { n: complete })}
+          </button>
+        )}
       </div>
       <ul className="space-y-2">
         {shown.map((n) => (
