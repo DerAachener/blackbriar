@@ -5,6 +5,11 @@
 Was sich in Blackbriar geändert hat, neueste Fassung zuerst.
 Die erste Zahl ändert sich bei größeren Umbauten, auf die man beim Update achten muss, die mittlere bei neuen Funktionen, die letzte bei Korrekturen.
 
+## bb.1.6.0 – 19.10.2026
+
+- Wunsch-Mails warten, bis bei diesem Benutzer 15 Minuten lang nichts Neues angekommen ist, bei Filmen wie bei Serien. Mehrere gewünschte Filme, die nacheinander ankommen, stehen jetzt in einer Mail statt in je einer. Spätestens eine Stunde nach dem ersten Titel geht die Mail raus.
+- „Staffel komplett“ in Wunsch-Mails zählt die Folgen jetzt in Sonarr, wie die Staffel-Hinweise seit bb.1.5.1. Ohne Sonarr gilt wie bisher TMDB.
+
 ## bb.1.5.1 – 19.10.2026
 
 - „Staffel komplett“ zählt die Folgen jetzt in Sonarr, das die Staffeln wie Plex nummeriert. TMDB zählt manche Serien anders (Staffel 1 dort ist Staffel 2 in Sonarr), dadurch fielen komplette Staffeln durch. TMDB hält einen Hinweis nur noch zurück, wenn es die Staffel mindestens so groß kennt und dort noch eine Folge angekündigt ist.

@@ -6,13 +6,17 @@ import { effectivePrefs, logMail, titleUrl, unsubscribeUrl } from './mailprefs.t
 import { poster, summary } from './newsletter.ts'
 import { escapeHtml } from './telegram.ts'
 import { getSeasonPlan } from './tmdb.ts'
+import { arrInstance, getSeriesFiles, type SeriesFiles } from './arr.ts'
+import { fileList } from './media.ts'
+import { completeSeason } from './notices.ts'
 
 // Sofort Bescheid geben, wenn ein Titel ankommt, den jemand auf der Merkliste hatte oder in Seerr angefragt hat.
 // Der Newsletter nennt ihn später auch, aber auf den wartet man im Zweifel eine Woche.
 //
 // Filme werden gemeldet, sobald sie da sind. Bei Serien geht es staffelweise: einmal, sobald die erste Folge einer
 // Staffel da ist, und einmal, wenn die Staffel komplett ist. Ist sie beim ersten Hinsehen schon komplett, bleibt es bei einer Mail.
-// Gemeldet wird erst, wenn bei der Serie seit 15 Minuten nichts mehr angekommen ist, damit ein Import eine Mail ergibt.
+// Gemeldet wird erst, wenn bei diesem Benutzer seit 15 Minuten kein Wunschtitel mehr angekommen ist, damit mehrere
+// Filme oder ein Import mehrerer Staffeln eine Mail ergeben; spätestens aber eine Stunde nach dem ersten.
 
 db.exec(`CREATE TABLE IF NOT EXISTS mail_wishes (
   user_id    INTEGER NOT NULL,
@@ -68,19 +72,34 @@ export interface Arrival {
   seasons: { season: number; stage: 'start' | 'complete' }[]
   /** Die Staffel war schon als begonnen gemeldet und ist jetzt vollständig */
   followUp: boolean
+  /** Wann zuletzt etwas davon ankam (Unix-Sekunden) */
+  arrived: number
 }
 
 const WANTED = '(SELECT type, tmdb_id FROM watchlist WHERE user_id = ?1 UNION SELECT type, tmdb_id FROM requests WHERE user_id = ?1)'
 
-// Sammelzeit bei Serien: Solange noch Folgen eintreffen, etwa beim Import mehrerer Staffeln, wird gewartet.
-// So gibt es eine Mail für alles, statt je Staffel eine für den Start und eine für „komplett“.
+// Sammelzeit je Benutzer: Solange noch Wunschtitel eintreffen, etwa mehrere Filme oder mehrere Staffeln, wird gewartet.
+// So gibt es eine Mail für alles. Kommt ständig etwas nach, geht sie spätestens nach MAX_WAIT raus.
 const QUIET = 15 * 60
+const MAX_WAIT = 60 * 60
+
+// Was Sonarr zu einer Serie weiß, ein paar Minuten zwischengespeichert: Die Prüfung läuft jede Minute für jeden Benutzer
+const sonarrCache = new Map<number, { at: number; files: SeriesFiles | null }>()
+async function sonarrFiles(ratingKey: number): Promise<SeriesFiles | null | undefined> {
+  const entry = fileList().find((f) => f.rating_key === ratingKey)?.arr.find((a) => arrInstance(a.instance)?.app === 'sonarr')
+  if (!entry) return undefined
+  const cached = sonarrCache.get(ratingKey)
+  if (cached && now() - cached.at < 5 * 60) return cached.files
+  const files = await getSeriesFiles(arrInstance(entry.instance)!, entry.id).catch(() => null)
+  sonarrCache.set(ratingKey, { at: now(), files })
+  return files
+}
 
 /** Frisch angekommene Filme, die dieser Benutzer wollte und über die er noch keine Mail bekommen hat. */
 function movieArrivals(userId: number, from: number): Arrival[] {
   return db
     .prepare(
-      `SELECT DISTINCT l.rating_key, l.type, l.title, l.year, l.thumb
+      `SELECT DISTINCT l.rating_key, l.type, l.title, l.year, l.thumb, l.added_at AS arrived
        FROM library_items l JOIN ${WANTED} w ON w.type = l.type AND w.tmdb_id = l.tmdb_id
        WHERE l.type = 'movie' AND l.added_at > ?2 AND ${accessFilter('?1')}
          AND NOT EXISTS (SELECT 1 FROM mail_wishes m WHERE m.user_id = ?1 AND m.rating_key = l.rating_key)
@@ -97,8 +116,7 @@ async function showArrivals(userId: number, from: number): Promise<Arrival[]> {
   const rows = db
     .prepare(
       `SELECT l.rating_key, l.title, l.year, l.thumb, l.tmdb_id, f.season,
-         COUNT(*) AS episodes, MAX(f.episode) AS last_episode,
-         (SELECT MAX(x.added_at) FROM media_files x WHERE x.item_key = l.rating_key) AS show_last
+         COUNT(DISTINCT f.episode) AS episodes, MAX(f.episode) AS last_episode, MAX(f.added_at) AS arrived
        FROM library_items l
        JOIN ${WANTED} w ON w.type = l.type AND w.tmdb_id = l.tmdb_id
        JOIN media_files f ON f.item_key = l.rating_key AND f.rating_key <> f.item_key AND f.season > 0
@@ -114,14 +132,15 @@ async function showArrivals(userId: number, from: number): Promise<Arrival[]> {
   const shows = new Map<number, Arrival & { lines: string[] }>()
   for (const r of rows) {
     const key = r.rating_key as number
-    // Kam bei der Serie gerade noch eine Folge an, beim nächsten Durchlauf wieder hinsehen
-    if (now() - Number(r.show_last ?? 0) < QUIET) continue
     const season = Number(r.season)
+    const plan = tmdbConfigured() && r.tmdb_id != null ? await getSeasonPlan(r.tmdb_id as number).catch(() => null) : null
+    // Gezählt wird nach Sonarr, das die Staffeln wie Plex nummeriert; nur ohne Sonarr nach TMDB
+    const sonarr = await sonarrFiles(key)
     let complete = false
-    if (tmdbConfigured() && r.tmdb_id != null) {
-      const plan = await getSeasonPlan(r.tmdb_id as number).catch(() => null)
-      const total = plan?.episodes.get(season) ?? 0
-      complete = Boolean(plan) && total > 0 && Number(r.last_episode) >= total && plan!.airing !== season
+    if (sonarr) complete = completeSeason(sonarr, season, Number(r.episodes), plan) !== null
+    else if (plan) {
+      const total = plan.episodes.get(season) ?? 0
+      complete = total > 0 && Number(r.last_episode) >= total && plan.airing !== season
     }
     const started = sent.has(`${key}:${season}:start`)
     const stage = complete && !sent.has(`${key}:${season}:complete`) ? 'complete' : !started ? 'start' : null
@@ -135,8 +154,10 @@ async function showArrivals(userId: number, from: number): Promise<Arrival[]> {
       detail: '',
       seasons: [],
       followUp: true,
+      arrived: 0,
       lines: [],
     }
+    show.arrived = Math.max(show.arrived, Number(r.arrived))
     show.seasons.push({ season, stage })
     // Nur wenn jede gemeldete Staffel schon einmal als begonnen gemeldet war, ist es eine reine Nachmeldung
     show.followUp &&= stage === 'complete' && started
@@ -145,6 +166,12 @@ async function showArrivals(userId: number, from: number): Promise<Arrival[]> {
     shows.set(key, show)
   }
   return [...shows.values()].map(({ lines, ...show }) => ({ ...show, detail: lines.join(', ') }))
+}
+
+/** Ob die Sammelzeit vorbei ist: seit QUIET nichts Neues, oder der erste Titel wartet schon MAX_WAIT. */
+export function wishDue(items: Arrival[], at = now()): boolean {
+  const times = items.map((i) => Number(i.arrived) || 0)
+  return at - Math.max(...times) >= QUIET || at - Math.min(...times) >= MAX_WAIT
 }
 
 /** Alles, worüber dieser Benutzer jetzt eine Mail bekäme. */
@@ -254,6 +281,8 @@ export async function maybeSendWishMails(): Promise<void> {
       if (u.newsletter_unsub || !effectivePrefs(id).instant || !userEmail(id)) continue
       const items = await arrivals(id)
       if (!items.length) continue
+      // Sammelzeit: Kam gerade noch etwas an, beim nächsten Durchlauf wieder hinsehen
+      if (!wishDue(items)) continue
       // Vor dem Versand vermerken: Lieber fällt eine Mail aus, als dass sie nach einem Fehler jede Minute neu rausgeht
       markArrivals(id, items)
       deliver(id, await render(id, items))

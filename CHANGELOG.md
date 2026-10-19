@@ -5,6 +5,11 @@
 What changed in Blackbriar, newest version first.
 The first number changes with larger changes that need attention when updating, the middle one with new features, the last one with fixes.
 
+## bb.1.6.0 – 2026-10-19
+
+- Wish mails wait until nothing new has arrived for that user for 15 minutes, for movies and series alike. Several wished movies arriving one after another now come in one mail instead of one each. A mail goes out at the latest one hour after the first title arrived.
+- "Season complete" in wish mails now counts the episodes in Sonarr, like the season notices since bb.1.5.1. Without Sonarr, TMDB is used as before.
+
 ## bb.1.5.1 – 2026-10-19
 
 - "Season complete" now counts the episodes in Sonarr, which numbers seasons the same way as Plex. TMDB numbers some shows differently (its season 1 is season 2 in Sonarr), so complete seasons were missed. TMDB only holds a notice back when it knows the season with at least as many episodes and still lists an upcoming one.

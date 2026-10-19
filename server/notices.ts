@@ -100,7 +100,6 @@ async function announce(html: string, thumb: string | null, silent: boolean): Pr
  * und dort noch eine Folge angekündigt ist. Gibt die Zahl der Folgen zurück oder null.
  */
 export function completeSeason(sonarr: SeriesFiles, season: number, onServer: number, plan: SeasonPlan | null): number | null {
-  if (sonarr.seasons.get(season) === false) return null
   const episodes = sonarr.episodes.filter((e) => e.season === season && e.episode > 0)
   if (!episodes.length || episodes.some((e) => !e.hasFile)) return null
   // Ohne Sendedatum oder mit einem in der Zukunft kommt noch etwas
@@ -197,7 +196,7 @@ export async function checkSeasons(): Promise<void> {
     // Staffel komplett, solange Sonarr sie noch beobachtet
     const tmdbId = tmdbConfigured() ? (tmdbOf.get(s.rating_key)?.tmdb_id as number | null | undefined) : null
     const plan = tmdbId ? await getSeasonPlan(tmdbId).catch(() => null) : null
-    const total = completeSeason(sonarr, s.season, Number(onServer.get(s.rating_key, s.season)?.n ?? 0), plan)
+    const total = sonarr.seasons.get(s.season) === false ? null : completeSeason(sonarr, s.season, Number(onServer.get(s.rating_key, s.season)?.n ?? 0), plan)
     if (!total) {
       // Gelöschte Folgen, Staffel schon unbeobachtet o. Ä.: Ein offener Hinweis stimmt nicht mehr
       closeComplete.run(s.rating_key, s.season)
