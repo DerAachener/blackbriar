@@ -5,10 +5,14 @@
 What changed in Blackbriar, newest version first.
 The first number changes with larger changes that need attention when updating, the middle one with new features, the last one with fixes.
 
+## bb.1.6.1 – 2026-10-20
+
+- Same terms in English throughout: "requested" instead of "wished for" on a title page, "request emails" instead of "wish mails" in the bb.1.6.0 notes.
+
 ## bb.1.6.0 – 2026-10-19
 
-- Wish mails wait until nothing new has arrived for that user for 15 minutes, for movies and series alike. Several wished movies arriving one after another now come in one mail instead of one each. A mail goes out at the latest one hour after the first title arrived.
-- "Season complete" in wish mails now counts the episodes in Sonarr, like the season notices since bb.1.5.1. Without Sonarr, TMDB is used as before.
+- Request emails wait until nothing new has arrived for that user for 15 minutes, for movies and series alike. Several requested movies arriving one after another now come in one email instead of one each. An email goes out at the latest one hour after the first title arrived.
+- "Season complete" in request emails now counts the episodes in Sonarr, like the season notices since bb.1.5.1. Without Sonarr, TMDB is used as before.
 
 ## bb.1.5.1 – 2026-10-19
 

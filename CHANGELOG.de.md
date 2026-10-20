@@ -5,6 +5,10 @@
 Was sich in Blackbriar geändert hat, neueste Fassung zuerst.
 Die erste Zahl ändert sich bei größeren Umbauten, auf die man beim Update achten muss, die mittlere bei neuen Funktionen, die letzte bei Korrekturen.
 
+## bb.1.6.1 – 20.10.2026
+
+- Englische Texte einheitlich: „requested“ statt „wished for“ auf der Titelseite, „request emails“ statt „wish mails“ in den Notizen zu bb.1.6.0.
+
 ## bb.1.6.0 – 19.10.2026
 
 - Wunsch-Mails warten, bis bei diesem Benutzer 15 Minuten lang nichts Neues angekommen ist, bei Filmen wie bei Serien. Mehrere gewünschte Filme, die nacheinander ankommen, stehen jetzt in einer Mail statt in je einer. Spätestens eine Stunde nach dem ersten Titel geht die Mail raus.

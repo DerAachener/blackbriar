@@ -558,7 +558,7 @@ const en: Record<string, string> = {
   'Staffeln': 'Seasons',
   'Extras': 'Specials',
   'Wer': 'Who',
-  'Bisher hat ihn niemand gesehen, bewertet oder gewünscht.': 'Nobody has watched, rated or wished for it yet.',
+  'Bisher hat ihn niemand gesehen, bewertet oder gewünscht.': 'Nobody has watched, rated or requested it yet.',
   'Letzte Wiedergaben': 'Recent plays',
   'die letzten {shown} von {total}': 'the last {shown} of {total}',
   'Vom Server löschen': 'Delete from server',
