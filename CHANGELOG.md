@@ -5,6 +5,10 @@
 What changed in Blackbriar, newest version first.
 The first number changes with larger changes that need attention when updating, the middle one with new features, the last one with fixes.
 
+## bb.1.7.2 – 2026-10-20
+
+- The image build uses the current versions of its GitHub Actions, which run on Node.js 24. GitHub no longer warns about Node.js 20. Nothing changes in the app.
+
 ## bb.1.7.1 – 2026-10-20
 
 - Releases no longer need a tag pushed from a local clone: on GitHub, Actions → "Docker-Image bauen" → "Run workflow" on main with "Freigeben" ticked builds the images, sets the tag and creates the release. The version comes from package.json. Pushing a tag still works.

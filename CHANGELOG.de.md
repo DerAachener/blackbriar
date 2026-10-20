@@ -5,6 +5,10 @@
 Was sich in Blackbriar geändert hat, neueste Fassung zuerst.
 Die erste Zahl ändert sich bei größeren Umbauten, auf die man beim Update achten muss, die mittlere bei neuen Funktionen, die letzte bei Korrekturen.
 
+## bb.1.7.2 – 20.10.2026
+
+- Der Bau der Images nutzt die aktuellen Versionen der GitHub Actions, die auf Node.js 24 laufen. GitHub warnt nicht mehr vor Node.js 20. An der App ändert sich nichts.
+
 ## bb.1.7.1 – 20.10.2026
 
 - Freigeben geht ohne Tag aus einem lokalen Klon: Auf GitHub unter Actions → „Docker-Image bauen“ → „Run workflow“ auf main mit Häkchen bei „Freigeben“ baut der Lauf die Images, setzt das Tag und legt das Release an. Die Version kommt aus package.json. Ein Tag hochladen geht weiterhin.
