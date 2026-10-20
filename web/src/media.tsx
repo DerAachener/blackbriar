@@ -453,6 +453,7 @@ function EpisodeTile({ show, canDelete, onDelete }: { show: EpisodeCleanupItem; 
       open={{ rating_key: show.rating_key, type: 'show', title: show.title, year: show.year, thumb: show.thumb }}
       aside={<span className="shrink-0 font-medium whitespace-nowrap tabular-nums">{fmtSize(show.size)}</span>}
       info={meta(show.year, t(show.episodes === 1 ? '{n} gesehene Folge' : '{n} gesehene Folgen', { n: show.episodes }))}
+      section={show.section}
       note={airingNote(show.airing)}
     >
       {show.seasons.map((s) => (
@@ -533,6 +534,7 @@ export function OpenView({ userId, onChange }: { userId: number | null; onChange
               title={o.title}
               open={{ rating_key: o.rating_key, type: o.type, title: o.title, year: o.year, thumb: o.thumb }}
               info={meta(typeLabel(o.type), o.year, fmtSize(o.size))}
+              section={o.section}
               note={airingNote(o.airing)}
               aside={
                 <span className="-mt-1 -mr-1 flex shrink-0">
@@ -633,6 +635,7 @@ export function CleanupView() {
     </>
   }
   info={meta(typeLabel(c.type), c.year, c.reason === 'owner' ? t('von dir gesehen und bewertet') : c.reason === 'unrated' ? t('alle gesehen') : t('alle fertig'))}
+  section={c.section}
   note={airingNote(c.airing)}
 >
   {c.people.map((p) => (

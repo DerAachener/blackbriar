@@ -90,6 +90,8 @@ export interface OpenItem {
   title: string
   year: number | null
   thumb: string | null
+  /** Mediathek auf dem Server; leer, wenn es von dieser Art nur eine gibt */
+  section: string | null
   seen_at: number
   /** In Plex nur als gesehen markiert, nicht (vollständig) abgespielt */
   marked: boolean
@@ -122,6 +124,8 @@ export interface TitleSummary {
   title: string
   year: number | null
   thumb: string | null
+  /** Mediathek auf dem Server; leer, wenn es von dieser Art nur eine gibt */
+  section: string | null
   leaf_count: number
   last_activity: number
   size: number | null
@@ -215,6 +219,8 @@ export interface WatchlistTitle {
   poster: string | null
   rating_key: number | null
   thumb: string | null
+  /** Mediathek auf dem Server; leer, wenn es von dieser Art nur eine gibt */
+  section: string | null
   leaf_count: number
   size: number | null
   /** Stand der Anfrage in Seerr; null, wenn es keine gibt */
@@ -261,7 +267,7 @@ export interface Dashboard {
   /** Angefragt und freigegeben, aber noch nicht auf dem Server */
   /** null, wenn Seerr nicht verbunden ist */
   pending: number | null
-  added: { rating_key: number; type: 'movie' | 'show'; title: string; year: number | null; thumb: string | null; added_at: number; detail: string }[]
+  added: { rating_key: number; type: 'movie' | 'show'; title: string; year: number | null; thumb: string | null; section: string | null; added_at: number; detail: string }[]
   warnings: string[]
   /** Plex ist verbunden, der Abgleich läuft */
   ready: boolean
@@ -370,6 +376,8 @@ export interface CleanupItem {
   title: string
   year: number | null
   thumb: string | null
+  /** Mediathek auf dem Server; leer, wenn es von dieser Art nur eine gibt */
+  section: string | null
   size: number
   files: number
   reason: 'requesters' | 'owner' | 'unrated'
@@ -384,6 +392,8 @@ export interface EpisodeCleanupItem {
   title: string
   year: number | null
   thumb: string | null
+  /** Mediathek auf dem Server; leer, wenn es von dieser Art nur eine gibt */
+  section: string | null
   /** Vom Besitzer gesehene Folgen, die noch auf der Platte liegen */
   episodes: number
   size: number

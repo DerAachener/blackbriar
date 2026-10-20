@@ -1,6 +1,6 @@
 import { backupStatus } from './backup.ts'
 import { mailConfigured, plexConfigured, seerrConfigured, telegramConfigured } from './config.ts'
-import { db, getSettings, installedAt, now, openItems } from './db.ts'
+import { db, getSettings, installedAt, now, openItems, sectionLabel } from './db.ts'
 import { t } from './i18n.ts'
 import { effectivePrefs, lastSlot, type MailPrefs } from './mailprefs.ts'
 import { cleanupCandidates, episodeCleanup } from './media.ts'
@@ -15,6 +15,8 @@ export interface AddedItem {
   title: string
   year: number | null
   thumb: string | null
+  /** Mediathek für die Anzeige, siehe sectionLabel */
+  section: string | null
   added_at: number
   /** Bei Serien, was dazukam, z. B. „Staffel 2 · 3 neue Folgen“ */
   detail: string
@@ -25,14 +27,15 @@ const WEEK = 7 * 86400
 /** Filme und Serien, zu denen in den letzten sieben Tagen etwas dazugekommen ist, das Neueste zuerst. */
 function recentlyAdded(): AddedItem[] {
   const from = now() - WEEK
+  const label = sectionLabel()
   const movies = db
-    .prepare("SELECT rating_key, title, year, thumb, added_at FROM library_items WHERE type = 'movie' AND added_at > ?")
+    .prepare("SELECT rating_key, title, year, thumb, section, added_at FROM library_items WHERE type = 'movie' AND added_at > ?")
     .all(from)
-    .map((m) => ({ ...(m as unknown as AddedItem), type: 'movie' as const, detail: '' }))
+    .map((m) => ({ ...(m as unknown as AddedItem), section: label(m.section, 'movie'), type: 'movie' as const, detail: '' }))
   const shows = new Map<number, AddedItem & { parts: string[] }>()
   for (const r of db
     .prepare(
-      `SELECT l.rating_key, l.title, l.year, l.thumb, f.season, COUNT(*) AS episodes, MAX(f.added_at) AS added_at
+      `SELECT l.rating_key, l.title, l.year, l.thumb, l.section, f.season, COUNT(*) AS episodes, MAX(f.added_at) AS added_at
        FROM media_files f JOIN library_items l ON l.rating_key = f.item_key AND l.type = 'show'
        WHERE f.rating_key <> f.item_key AND f.added_at > ?
        GROUP BY l.rating_key, f.season ORDER BY f.season`,
@@ -45,6 +48,7 @@ function recentlyAdded(): AddedItem[] {
       title: r.title as string,
       year: r.year as number | null,
       thumb: r.thumb as string | null,
+      section: label(r.section, 'show'),
       added_at: 0,
       detail: '',
       parts: [],

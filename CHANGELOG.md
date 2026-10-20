@@ -5,6 +5,11 @@
 What changed in Blackbriar, newest version first.
 The first number changes with larger changes that need attention when updating, the middle one with new features, the last one with fixes.
 
+## bb.1.7.0 – 2026-10-20
+
+- The cards under Watchlists, Open ratings, Cleanup and History and under "New in the last seven days" on the dashboard show the Plex library a title is in. A title in several libraries, such as HD and 4K, shows all of them.
+- If there is only one library for movies or only one for shows, its name is left out. Titles that are not in Plex yet show no library, so the Waiting list stays as it is.
+
 ## bb.1.6.1 – 2026-10-20
 
 - Same terms in English throughout: "requested" instead of "wished for" on a title page, "request emails" instead of "wish mails" in the bb.1.6.0 notes.

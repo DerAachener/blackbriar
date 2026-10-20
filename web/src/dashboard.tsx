@@ -173,6 +173,7 @@ export function DashboardView() {
                     {a.title}
                   </p>
                   <p className="text-xs text-zinc-500">{a.detail || a.year}</p>
+                  {a.section && <p className="truncate text-xs text-zinc-500">{a.section}</p>}
                   <p className="text-xs text-zinc-600">{ago(a.added_at)}</p>
                 </button>
               ))}

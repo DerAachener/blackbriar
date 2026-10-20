@@ -1,6 +1,6 @@
 import { arrInstance } from './arr.ts'
 import { seerrConfigured } from './config.ts'
-import { db, getSettings, now, sectionFilter, titleSummaries, type TitlePerson } from './db.ts'
+import { db, getSettings, now, sectionFilter, sectionLabel, titleSummaries, type TitlePerson } from './db.ts'
 import { t } from './i18n.ts'
 
 export interface MediaStats {
@@ -208,6 +208,8 @@ export interface CleanupItem {
   title: string
   year: number | null
   thumb: string | null
+  /** Mediathek für die Anzeige, siehe sectionLabel */
+  section: string | null
   size: number
   files: number
   /**
@@ -236,6 +238,8 @@ export interface EpisodeCleanupItem {
   title: string
   year: number | null
   thumb: string | null
+  /** Mediathek für die Anzeige, siehe sectionLabel */
+  section: string | null
   episodes: number
   size: number
   seasons: EpisodeCleanupSeason[]
@@ -266,9 +270,10 @@ function cleanupContext() {
   const wishers = collect('SELECT type, tmdb_id, user_id FROM watchlist')
   const summaries = new Map(titleSummaries().map((t) => [t.rating_key, t]))
   const files = new Map(fileList().map((f) => [f.rating_key, f]))
+  const label = sectionLabel()
 
   return db
-    .prepare(`SELECT rating_key, type, title, year, thumb, leaf_count, tmdb_id FROM library_items l WHERE ${sectionFilter()}`)
+    .prepare(`SELECT rating_key, type, title, year, thumb, leaf_count, tmdb_id, section FROM library_items l WHERE ${sectionFilter()}`)
     .all()
     .map((l) => {
       const key = `${l.type}:${l.tmdb_id}`
@@ -293,6 +298,7 @@ function cleanupContext() {
           title: l.title as string,
           year: l.year as number | null,
           thumb: l.thumb as string | null,
+          section: label(l.section, l.type),
         },
         size: file?.size ?? 0,
         files: file?.files ?? 0,
@@ -371,6 +377,7 @@ export function episodeCleanup(): EpisodeCleanupItem[] {
       title: c.item.title,
       year: c.item.year,
       thumb: c.item.thumb,
+      section: c.item.section,
       episodes: watched.reduce((n, s) => n + s.watched, 0),
       size: watched.reduce((n, s) => n + s.size, 0),
       seasons: watched,
