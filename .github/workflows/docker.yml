@@ -1,13 +1,25 @@
 name: Docker-Image bauen
 
 # Jeder Push auf main baut das Image :dev, zum Testen.
-# Ein Tag der Form v0.12.5 gibt die Fassung frei: Image :0.12.5, :0.12 und :latest, dazu ein Release
-# auf GitHub mit dem Abschnitt aus CHANGELOG.md (englische Fassung).
+# Freigeben geht auf zwei Wegen, beide mit demselben Ergebnis: Image :0.12.5, :0.12 und :latest, dazu ein Release
+# auf GitHub mit den Abschnitten aus CHANGELOG.md (englische Fassung) seit der letzten Freigabe.
+# - Actions → „Docker-Image bauen“ → „Run workflow“ auf main mit Häkchen bei „Freigeben“. Die Version kommt aus
+#   package.json; der Lauf setzt das Tag selbst.
+# - Ein Tag der Form v0.12.5 hochladen; es muss zur Version in package.json passen.
 on:
   push:
     branches: [main]
     tags: ['v*']
   workflow_dispatch:
+    inputs:
+      release:
+        description: Freigeben (Version aus package.json, Tag und Release legt der Lauf selbst an)
+        type: boolean
+        default: false
+
+env:
+  # Steht vor der Versionsnummer in CHANGELOG.md und im Titel des Releases
+  PREFIX: bb
 
 jobs:
   build:
@@ -15,8 +27,6 @@ jobs:
     permissions:
       contents: write
       packages: write
-    env:
-      RELEASE: ${{ startsWith(github.ref, 'refs/tags/v') }}
     steps:
       # Mit allen Tags, damit das Release weiß, welche Fassung zuletzt freigegeben wurde
       - uses: actions/checkout@v4
@@ -28,16 +38,31 @@ jobs:
           node-version: 24
           cache: npm
 
-      - name: Tag und Versionsnummer müssen zusammenpassen
-        if: env.RELEASE == 'true'
-        run: test "v$(node -p "require('./package.json').version")" = "$GITHUB_REF_NAME"
+      # Ergebnis: das Tag der Freigabe, z. B. v0.12.5, oder leer bei einem Lauf für :dev
+      - name: Freigabe bestimmen
+        id: rel
+        env:
+          WANTED: ${{ inputs.release }}
+        run: |
+          version="$(node -p "require('./package.json').version")"
+          if [ "$GITHUB_REF_TYPE" = tag ]; then
+            [ "v$version" = "$GITHUB_REF_NAME" ] || { echo "::error::Das Tag $GITHUB_REF_NAME passt nicht zur Version $version in package.json."; exit 1; }
+            echo "tag=$GITHUB_REF_NAME" >> "$GITHUB_OUTPUT"
+          elif [ "$WANTED" = true ]; then
+            [ "$GITHUB_REF_NAME" = main ] || { echo "::error::Freigeben geht nur von main."; exit 1; }
+            if git rev-parse -q --verify "refs/tags/v$version" > /dev/null; then
+              echo "::error::v$version ist schon freigegeben. Für eine neue Freigabe muss die Version in package.json steigen."
+              exit 1
+            fi
+            echo "tag=v$version" >> "$GITHUB_OUTPUT"
+          fi
 
       - run: npm ci
       - run: npm run typecheck
 
       # Für das ARM-Image einer freigegebenen Fassung
       - uses: docker/setup-qemu-action@v3
-        if: env.RELEASE == 'true'
+        if: steps.rel.outputs.tag != ''
 
       - uses: docker/setup-buildx-action@v3
 
@@ -53,17 +78,17 @@ jobs:
           images: ghcr.io/${{ github.repository }}
           flavor: latest=false
           tags: |
-            type=raw,value=dev,enable=${{ env.RELEASE != 'true' }}
-            type=sha,enable=${{ env.RELEASE != 'true' }}
-            type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
-            type=raw,value=latest,enable=${{ env.RELEASE == 'true' }}
+            type=raw,value=dev,enable=${{ steps.rel.outputs.tag == '' }}
+            type=sha,enable=${{ steps.rel.outputs.tag == '' }}
+            type=semver,pattern={{version}},value=${{ steps.rel.outputs.tag }},enable=${{ steps.rel.outputs.tag != '' }}
+            type=semver,pattern={{major}}.{{minor}},value=${{ steps.rel.outputs.tag }},enable=${{ steps.rel.outputs.tag != '' }}
+            type=raw,value=latest,enable=${{ steps.rel.outputs.tag != '' }}
 
       - uses: docker/build-push-action@v6
         with:
           context: .
           push: true
-          platforms: ${{ env.RELEASE == 'true' && 'linux/amd64,linux/arm64' || 'linux/amd64' }}
+          platforms: ${{ steps.rel.outputs.tag != '' && 'linux/amd64,linux/arm64' || 'linux/amd64' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           build-args: |
@@ -72,18 +97,20 @@ jobs:
           cache-to: type=gha,mode=max
 
       - name: Release auf GitHub anlegen
-        if: env.RELEASE == 'true'
+        if: steps.rel.outputs.tag != ''
         env:
           GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.rel.outputs.tag }}
         run: |
-          version="${GITHUB_REF_NAME#v}"
+          version="${TAG#v}"
           # Alles seit der letzten freigegebenen Fassung, nicht nur der oberste Abschnitt
-          prev="$(git describe --tags --abbrev=0 --match 'v*' "${GITHUB_REF_NAME}^" 2>/dev/null || true)"
+          prev="$(git describe --tags --abbrev=0 --match 'v*' HEAD^ 2>/dev/null || true)"
           prev="${prev#v}"
-          awk -v from="## bb.$version " -v to="## bb.$prev " -v single="${prev:+no}" '
+          awk -v from="## $PREFIX.$version " -v to="## $PREFIX.$prev " -v single="${prev:+no}" '
             index($0, from) == 1 { on = 1; print; next }
             on && single == "no" && index($0, to) == 1 { exit }
             on && single != "no" && /^## / { exit }
             on
           ' CHANGELOG.md > notes.md
-          gh release create "$GITHUB_REF_NAME" --title "bb.$version" --notes-file notes.md
+          # Fehlt das Tag noch (Freigabe über „Run workflow“), legt gh es auf genau diesem Commit an
+          gh release create "$TAG" --target "$GITHUB_SHA" --title "$PREFIX.$version" --notes-file notes.md

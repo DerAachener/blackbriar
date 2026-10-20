@@ -6,7 +6,8 @@
   Läuft auf Port 8787 (`PORT`), Daten unter `DATA_DIR` (Standard `./data`).
 - Oberfläche: React 19, Vite, Tailwind v4 in `web/`. Im Entwicklungsbetrieb läuft Vite auf Port 5173 und
   leitet `/api` an `API_TARGET` weiter (Standard `http://localhost:8787`).
-- Docker-Image für amd64 und arm64 über GitHub Actions: Push auf `main` baut `:dev`, ein Tag `vX.Y.Z` baut
+- Docker-Image für amd64 und arm64 über GitHub Actions: Push auf `main` baut `:dev`. Freigegeben wird über
+  „Run workflow“ auf `main` mit Häkchen „Freigeben“ (Version aus `package.json`) oder ein Tag `vX.Y.Z`; beides baut
   `:X.Y.Z`, `:X.Y`, `:latest` und legt ein Release mit dem Text aus `CHANGELOG.md` (englisch) an.
 - Befehle: `npm run dev:server`, `npm run dev:web`, `npm run typecheck`, `npm run build`.
 
