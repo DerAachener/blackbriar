@@ -5,6 +5,10 @@
 Was sich in Blackbriar geändert hat, neueste Fassung zuerst.
 Die erste Zahl ändert sich bei größeren Umbauten, auf die man beim Update achten muss, die mittlere bei neuen Funktionen, die letzte bei Korrekturen.
 
+## bb.1.7.1 – 20.10.2026
+
+- Freigeben geht ohne Tag aus einem lokalen Klon: Auf GitHub unter Actions → „Docker-Image bauen“ → „Run workflow“ auf main mit Häkchen bei „Freigeben“ baut der Lauf die Images, setzt das Tag und legt das Release an. Die Version kommt aus package.json. Ein Tag hochladen geht weiterhin.
+
 ## bb.1.7.0 – 20.10.2026
 
 - Die Karten unter Merklisten, Offene Bewertungen, Kann weg und Verlauf und unter „Neu in den letzten sieben Tagen“ auf der Startseite zeigen die Plex-Mediathek, in der ein Titel liegt. Liegt ein Titel in mehreren Mediatheken, etwa HD und 4K, stehen alle da.
