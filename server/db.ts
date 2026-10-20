@@ -511,6 +511,8 @@ export interface TitleSummary {
   year: number | null
   thumb: string | null
   leaf_count: number
+  /** Mediathek für die Anzeige, siehe sectionLabel */
+  section: string | null
   last_activity: number
   /** Letzte echte Wiedergabe; Bewertungen und „als gesehen markiert“ zählen hier nicht */
   last_played: number
@@ -524,8 +526,9 @@ export function titleSummaries(): TitleSummary[] {
 
   const titles = new Map<number, TitleSummary>()
   const items = new Map<number, Record<string, unknown>>()
-  for (const i of db.prepare('SELECT rating_key, type, title, year, thumb, leaf_count FROM library_items').all()) {
-    items.set(i.rating_key as number, i)
+  const label = sectionLabel()
+  for (const i of db.prepare('SELECT rating_key, type, title, year, thumb, leaf_count, section FROM library_items').all()) {
+    items.set(i.rating_key as number, { ...i, section: label(i.section, i.type) })
   }
   // Titel, die es in der Bibliothek nicht mehr gibt, fallen weg
   const person = (key: number, userId: number, activity: number | null): TitlePerson | undefined => {
@@ -618,7 +621,7 @@ export function historyTitles(): HistoryTitle[] {
     let entry = gone.get(id)
     if (!entry) {
       const poster = (posterOf.get(type, title)?.poster as string | undefined) || null
-      entry = { rating_key: null, type, title, year, thumb: null, leaf_count: 0, last_activity: 0, last_played: 0, people: [], gone: true, poster }
+      entry = { rating_key: null, type, title, year, thumb: null, leaf_count: 0, section: null, last_activity: 0, last_played: 0, people: [], gone: true, poster }
       gone.set(id, entry)
     }
     entry.year ??= year
@@ -673,6 +676,8 @@ export interface WatchlistTitle {
   rating_key: number | null
   thumb: string | null
   leaf_count: number
+  /** Mediathek(en) auf dem Server, siehe sectionLabel; null, solange der Titel nicht in der Bibliothek ist */
+  section: string | null
   people: TitlePerson[]
 }
 
@@ -682,7 +687,7 @@ export function watchlistTitles(): WatchlistTitle[] {
     .prepare(
       // Der Titel aus der Bibliothek hat Vorrang, weil er in der Sprache des Servers ist
       `SELECT w.user_id, u.name, w.type, w.tmdb_id, COALESCE(l.title, w.title) AS title, COALESCE(l.year, w.year) AS year,
-         w.poster, l.rating_key, l.thumb, l.leaf_count
+         w.poster, l.rating_key, l.thumb, l.leaf_count, l.section
        FROM watchlist w
        JOIN users u ON u.id = w.user_id AND u.active = 1
        LEFT JOIN library_items l ON l.type = w.type
@@ -697,6 +702,7 @@ export function watchlistTitles(): WatchlistTitle[] {
   const rated = db.prepare('SELECT rating FROM ratings WHERE user_id = ? AND rating_key = ?')
   const marked = db.prepare('SELECT count, viewed_at, baseline FROM plex_watched WHERE user_id = ? AND rating_key = ?')
 
+  const label = sectionLabel()
   const titles = new Map<string, WatchlistTitle>()
   for (const r of rows) {
     const id = `${r.type}:${r.tmdb_id}`
@@ -711,10 +717,14 @@ export function watchlistTitles(): WatchlistTitle[] {
         rating_key: r.rating_key as number | null,
         thumb: r.thumb as string | null,
         leaf_count: (r.leaf_count as number | null) ?? 0,
+        section: null,
         people: [],
       }
       titles.set(id, entry)
     }
+    // Liegt der Titel in mehreren Mediatheken (z. B. HD und 4K), stehen alle da
+    const section = label(r.section, r.type)
+    if (section && !entry.section?.split(', ').includes(section)) entry.section = entry.section ? `${entry.section}, ${section}` : section
     const userId = r.user_id as number
     let p = entry.people.find((x) => x.user_id === userId)
     if (!p) {
@@ -748,6 +758,8 @@ export interface OpenItem {
   title: string
   year: number | null
   thumb: string | null
+  /** Mediathek für die Anzeige, siehe sectionLabel */
+  section: string | null
   seen_at: number
   /** In Plex nur als gesehen markiert, nicht (vollständig) abgespielt */
   marked: boolean
@@ -779,6 +791,16 @@ export function plexSections(): { name: string; type: string }[] {
   } catch {
     return []
   }
+}
+
+/**
+ * Name der Mediathek für die Karten in den Listen. Gibt es von einer Art (Filme oder Serien) nur eine Mediathek,
+ * sagt ihr Name nichts Neues und bleibt weg.
+ */
+export function sectionLabel(): (section: unknown, type: unknown) => string | null {
+  const count = new Map<string, number>()
+  for (const s of plexSections()) count.set(s.type, (count.get(s.type) ?? 0) + 1)
+  return (section, type) => (typeof section === 'string' && section && count.get(type === 'show' ? 'show' : 'movie') !== 1 ? section : null)
 }
 
 /** Sortiert nach der eigenen Reihenfolge; was dort nicht steht, kommt alphabetisch dahinter. */
@@ -851,6 +873,7 @@ export function openItems(userId?: number): OpenItem[] {
         title: title.title,
         year: title.year,
         thumb: title.thumb,
+        section: title.section,
         seen_at: p.seen_at,
         marked: Boolean(p.marked),
         quiet: Boolean(p.marked && p.quiet),

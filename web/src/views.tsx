@@ -235,6 +235,7 @@ export function Tile({
   title,
   aside,
   info,
+  section,
   note,
   open,
   children,
@@ -246,6 +247,8 @@ export function Tile({
   /** Steht rechts neben dem Titel, z. B. die Größe */
   aside?: ReactNode
   info: string
+  /** Mediathek auf dem Server, eigene Zeile unter `info` */
+  section?: string | null
   /** Hervorgehobene Zusatzzeile */
   note?: string
   /** Mit dieser Angabe öffnet ein Klick auf Bild oder Titel das Info-Fenster */
@@ -275,6 +278,7 @@ export function Tile({
           {aside}
         </div>
         <p className="truncate text-sm text-zinc-500">{info}</p>
+        {section && <p className="truncate text-xs text-zinc-500">{section}</p>}
         {note && <p className="truncate text-xs text-amber-300/80">{note}</p>}
         {children}
       </div>
@@ -342,6 +346,7 @@ export function TitlesView({ userId }: { userId: number | null }) {
               tmdbPoster={item.poster}
               title={item.title}
               info={meta(typeLabel(item.type), item.year, fmtSize(item.size))}
+              section={item.section}
               note={item.gone ? t('nicht mehr auf dem Server') : undefined}
               open={item.gone ? undefined : { rating_key: item.rating_key, type: item.type, title: item.title, year: item.year, thumb: item.thumb }}
             >
@@ -421,6 +426,7 @@ export function WatchlistView({ userId, configured }: { userId: number | null; c
               title={item.title}
               open={{ rating_key: item.rating_key, type: item.type, tmdb_id: item.tmdb_id, title: item.title, year: item.year, thumb: item.thumb, poster: item.poster }}
               info={meta(typeLabel(item.type), item.year, fmtSize(item.size))}
+              section={item.section}
               note={item.rating_key == null ? meta(t('nicht auf dem Server'), item.request?.label ?? t('nicht angefragt')) : undefined}
             >
               {item.people.map((p) => (
