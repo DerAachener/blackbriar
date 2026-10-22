@@ -5,6 +5,10 @@
 What changed in Blackbriar, newest version first.
 The first number changes with larger changes that need attention when updating, the middle one with new features, the last one with fixes.
 
+## bb.1.7.3 – 2026-10-22
+
+- After deleting, the window closes by itself two seconds later if every step worked. If a step failed, it stays open and shows which one.
+
 ## bb.1.7.2 – 2026-10-20
 
 - The image build uses the current versions of its GitHub Actions, which run on Node.js 24. GitHub no longer warns about Node.js 20. Nothing changes in the app.
