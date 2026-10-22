@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Check, RefreshCw, Trash2, X } from 'lucide-react'
 import {
   api,
@@ -273,6 +273,17 @@ export function DeleteDialog({ target, seerr, onClose, onDone }: { target: Delet
   const [busy, setBusy] = useState(false)
   const [result, setResult] = useState<DeleteResult>()
   const [error, setError] = useState('')
+  const complete = Boolean(result?.deleted && result.steps.every((s) => s.ok))
+
+  // Hat jeder Schritt geklappt, schließt sich das Fenster nach kurzem Blick auf die Häkchen von selbst.
+  // onClose kommt bei jedem Neuzeichnen der Liste neu an und darf den Zeitgeber nicht neu starten.
+  const close = useRef(onClose)
+  close.current = onClose
+  useEffect(() => {
+    if (!complete) return
+    const timer = setTimeout(() => close.current(), 2000)
+    return () => clearTimeout(timer)
+  }, [complete])
 
   const run = () => {
     setBusy(true)

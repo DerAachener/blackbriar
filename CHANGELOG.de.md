@@ -5,6 +5,10 @@
 Was sich in Blackbriar geändert hat, neueste Fassung zuerst.
 Die erste Zahl ändert sich bei größeren Umbauten, auf die man beim Update achten muss, die mittlere bei neuen Funktionen, die letzte bei Korrekturen.
 
+## bb.1.7.3 – 22.10.2026
+
+- Nach dem Löschen schließt sich das Fenster zwei Sekunden später von selbst, wenn jeder Schritt geklappt hat. Ist ein Schritt gescheitert, bleibt es offen und zeigt, welcher.
+
 ## bb.1.7.2 – 20.10.2026
 
 - Der Bau der Images nutzt die aktuellen Versionen der GitHub Actions, die auf Node.js 24 laufen. GitHub warnt nicht mehr vor Node.js 20. An der App ändert sich nichts.
