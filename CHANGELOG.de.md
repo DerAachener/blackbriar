@@ -5,6 +5,14 @@
 Was sich in Blackbriar geändert hat, neueste Fassung zuerst.
 Die erste Zahl ändert sich bei größeren Umbauten, auf die man beim Update achten muss, die mittlere bei neuen Funktionen, die letzte bei Korrekturen.
 
+## bb.1.7.6 – 23.10.2026
+
+- README: Ansehen und Merklisten stehen vorn, Bewertungen sind als Extra beschrieben. Der Text sagt weiter, dass ein Titel standardmäßig auf eine Bewertung wartet und dass sich Bewertungen pro Benutzer abschalten lassen. Die deutsche README stimmt damit überein.
+
+## bb.1.7.5 – 23.10.2026
+
+- Die englische README brach bei „Installation“ ab. Der Rest steht wieder da: Installation, Aktualisieren, Zugriff von außen, Umgebungsvariablen, Fehlersuche, Datenschutz und die übrigen Abschnitte. Die Versionsbeispiele nennen jetzt aktuelle Tags.
+
 ## bb.1.7.4 – 23.10.2026
 
 - Unter „Was kommt“ stehen der Knopf „Wünschen“ und die Statusanzeigen jetzt unten rechts in der Kachel. Der Titel behält die volle Breite und wird nicht mehr abgeschnitten.

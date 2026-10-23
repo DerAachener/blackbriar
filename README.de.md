@@ -4,7 +4,7 @@
 
 **Die Begleit-App für alle, die ihren Plex-Server mit Freunden und Familie teilen.**
 
-Blackbriar zeigt, wer auf deinem Plex-Server was schaut und bewertet, und sagt dir, was weg kann. Deine Benutzer bekommen eine Mail, wenn etwas Neues da ist.
+Blackbriar zeigt, wer auf deinem Plex-Server was schaut, und sagt dir, was weg kann. Deine Benutzer bekommen eine Mail, wenn etwas Neues da ist.
 
 [English version](README.md) · [Änderungsverlauf](CHANGELOG.de.md)
 
@@ -12,9 +12,9 @@ Blackbriar zeigt, wer auf deinem Plex-Server was schaut und bewertet, und sagt d
 
 ## Was Blackbriar anders macht
 
-**Liest die Bewertungen aller Benutzer.** Plex speichert Bewertungen je Konto, und Tautulli zeigt nur die des Besitzers. Blackbriar sieht, was jeder auf deinem Server bewertet hat.
+**Ansehen und Merklisten zählen zuerst.** Ein Titel steht erst auf der Liste „Kann weg“, wenn ihn gerade niemand schaut, er auf keiner Merkliste mehr steht und alle, die ihn sich über Seerr gewünscht haben, ihn gesehen haben. Regeln musst du dafür nicht bauen.
 
-**„Kann weg“ heißt: gesehen und bewertet.** Ein Titel steht erst auf der Liste, wenn alle, die ihn sich gewünscht haben, ihn gesehen und bewertet haben und er auf keiner Merkliste mehr steht. Regeln musst du dafür nicht bauen.
+**Bewertungen sind das Tüpfelchen auf dem i.** Plex speichert Bewertungen je Konto, und Tautulli zeigt nur die des Besitzers. Blackbriar liest sie für alle, damit du siehst, ob ein Titel gefallen hat, bevor du ihn löschst. Standardmäßig wartet ein Titel zusätzlich auf die Bewertung derer, die bewerten. Schaltest du die Bewertungen bei einem Benutzer ab, zählt für ihn schon das Ansehen.
 
 **Automatische Erinnerungen:** Wer etwas gesehen, aber nicht bewertet hat oder es noch auf der Merkliste hat, bekommt eine Mail. Darin steht auch, wie man einen Titel behält.
 
@@ -28,14 +28,14 @@ Gedacht ist Blackbriar für Server mit ein paar Benutzern und knappem Speicherpl
 - Was jemand in Plex als gesehen markiert hat, zählt mit und ist als „als gesehen markiert“ ausgewiesen
 - Statistik nach Benutzer, Wochentag, Uhrzeit, Gerät und Wiedergabeart
 
-### Bewertungen
+### Bewertungen (das Extra)
 - Liest die Bewertungen aller Benutzer des Servers, nicht nur die des Besitzers
 - Zeigt, was jemand zu Ende gesehen, aber noch nicht bewertet hat
 - Schickt eine Telegram-Nachricht, sobald jemand etwas bewertet
 - Wer grundsätzlich nicht bewertet, lässt sich so kennzeichnen; bei ihm zählt Ansehen als fertig
 
 ### Aufräumen
-- **Kann weg:** Titel, die auf keiner Merkliste mehr stehen und die alle gesehen und bewertet haben, die sie angefragt hatten
+- **Kann weg:** Titel, die auf keiner Merkliste mehr stehen und die alle gesehen haben, die sie angefragt hatten (und bewertet, sofern die Bewertung bei dem Benutzer nicht abgeschaltet ist)
 - Eine zweite Gruppe für Titel, die alle zu Ende gesehen, aber nicht alle bewertet haben, nach einer Wartezeit, die du festlegst
 - Löschen direkt aus Blackbriar, abgestimmt mit Radarr, Sonarr und Seerr, für ganze Titel oder für gesehene Folgen. Das Löschen ist aus, bis du es in den Einstellungen erlaubst
 - Bibliothek mit Größe, Codec, Auflösung und Bitrate, gefiltert nach Plex-Mediathek
@@ -133,7 +133,7 @@ Das gilt überall: Wer `user:` setzt, muss dem Benutzer den Datenordner geben, s
 
 Ist Port 8787 bei dir belegt, ändere die linke Zahl bei `ports`, zum Beispiel `"8790:8787"`.
 
-`:latest` ist die neueste freigegebene Fassung. Wer bei einer festen Fassung bleiben will, nimmt ein Tag wie `:0.19.1`, oder `:0.19` für die neueste Korrektur dieser Reihe. Alle Fassungen stehen unter [Releases](../../releases). Die Images gibt es für amd64 und arm64.
+`:latest` ist die neueste freigegebene Fassung. Wer bei einer festen Fassung bleiben will, nimmt ein Tag wie `:1.7.4`, oder `:1.7` für die neueste Korrektur dieser Reihe. Alle Fassungen stehen unter [Releases](../../releases). Die Images gibt es für amd64 und arm64.
 
 1. Öffne `http://<dein-server>:8787`. Beim ersten Mal fragt Blackbriar nach einem Einrichtungscode. Er steht im Protokoll des Containers (`docker logs blackbriar`, auf TrueNAS bei der App unter „Logs“). Dann meldest du dich mit dem Plex-Konto an, dem der Server gehört, oder legst ein eigenes Konto mit Benutzername und Passwort an. Plex verbindest du dann unter Einstellungen → Plex mit einem Klick. Ab jetzt kommen nur dieses Plex-Konto und dein Passwort hinein.
 2. Wähle unter Einstellungen → Plex deinen Server aus der Liste.

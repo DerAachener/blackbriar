@@ -5,6 +5,14 @@
 What changed in Blackbriar, newest version first.
 The first number changes with larger changes that need attention when updating, the middle one with new features, the last one with fixes.
 
+## bb.1.7.6 – 2026-10-23
+
+- README: watching and watchlists come first, ratings are described as the extra on top. The text still says that a title waits for a rating by default and that ratings can be turned off per user. The German README matches.
+
+## bb.1.7.5 – 2026-10-23
+
+- The English README was cut off at "Installation". The rest is back: installation, updating, access from outside, environment variables, troubleshooting, privacy and the other sections. The version examples now name current tags.
+
 ## bb.1.7.4 – 2026-10-23
 
 - Under "Coming up" the "Request" button and the status badges now sit at the bottom right of the tile. The title keeps the full width and is no longer cut off.
