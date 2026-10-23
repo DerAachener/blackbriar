@@ -133,7 +133,7 @@ Das gilt überall: Wer `user:` setzt, muss dem Benutzer den Datenordner geben, s
 
 Ist Port 8787 bei dir belegt, ändere die linke Zahl bei `ports`, zum Beispiel `"8790:8787"`.
 
-`:latest` ist die neueste freigegebene Fassung. Wer bei einer festen Fassung bleiben will, nimmt ein Tag wie `:0.19.1`, oder `:0.19` für die neueste Korrektur dieser Reihe. Alle Fassungen stehen unter [Releases](../../releases). Die Images gibt es für amd64 und arm64.
+`:latest` ist die neueste freigegebene Fassung. Wer bei einer festen Fassung bleiben will, nimmt ein Tag wie `:1.7.4`, oder `:1.7` für die neueste Korrektur dieser Reihe. Alle Fassungen stehen unter [Releases](../../releases). Die Images gibt es für amd64 und arm64.
 
 1. Öffne `http://<dein-server>:8787`. Beim ersten Mal fragt Blackbriar nach einem Einrichtungscode. Er steht im Protokoll des Containers (`docker logs blackbriar`, auf TrueNAS bei der App unter „Logs“). Dann meldest du dich mit dem Plex-Konto an, dem der Server gehört, oder legst ein eigenes Konto mit Benutzername und Passwort an. Plex verbindest du dann unter Einstellungen → Plex mit einem Klick. Ab jetzt kommen nur dieses Plex-Konto und dein Passwort hinein.
 2. Wähle unter Einstellungen → Plex deinen Server aus der Liste.
