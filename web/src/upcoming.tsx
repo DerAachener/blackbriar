@@ -72,22 +72,26 @@ function Row({ poster, url, title, info, onOpen, onHide, right, children }: {
         <Poster thumb={null} tmdbPoster={poster} url={url} className="w-20" />
       </button>
       <div className="min-w-0 flex-1">
-        <div className="flex items-start gap-2">
-          <button onClick={onOpen} title={title} className="min-w-0 flex-1 truncate text-left font-medium hover:text-amber-300">
-            {title}
-          </button>
-          {right && <div className="shrink-0 text-right">{right}</div>}
-        </div>
+        <button onClick={onOpen} title={title} className="block max-w-full truncate text-left font-medium hover:text-amber-300">
+          {title}
+        </button>
         <p className="truncate text-sm text-zinc-500">{info}</p>
         {children}
-        {onHide && (
-          <button
-            onClick={onHide}
-            title={t('Interessiert mich nicht: unter „Was kommt“ nicht mehr zeigen')}
-            className="mt-1 inline-flex items-center gap-1 text-xs text-zinc-600 transition hover:text-zinc-300"
-          >
-            <EyeOff size={12} /> {t('Ausblenden')}
-          </button>
+        {(onHide || right) && (
+          <div className="mt-1 flex flex-wrap items-end justify-between gap-2">
+            {onHide ? (
+              <button
+                onClick={onHide}
+                title={t('Interessiert mich nicht: unter „Was kommt“ nicht mehr zeigen')}
+                className="inline-flex items-center gap-1 text-xs text-zinc-600 transition hover:text-zinc-300"
+              >
+                <EyeOff size={12} /> {t('Ausblenden')}
+              </button>
+            ) : (
+              <span />
+            )}
+            {right && <div className="ml-auto text-right">{right}</div>}
+          </div>
         )}
       </div>
     </Card>

@@ -5,6 +5,10 @@
 Was sich in Blackbriar geändert hat, neueste Fassung zuerst.
 Die erste Zahl ändert sich bei größeren Umbauten, auf die man beim Update achten muss, die mittlere bei neuen Funktionen, die letzte bei Korrekturen.
 
+## bb.1.7.4 – 23.10.2026
+
+- Unter „Was kommt“ stehen der Knopf „Wünschen“ und die Statusanzeigen jetzt unten rechts in der Kachel. Der Titel behält die volle Breite und wird nicht mehr abgeschnitten.
+
 ## bb.1.7.3 – 22.10.2026
 
 - Nach dem Löschen schließt sich das Fenster zwei Sekunden später von selbst, wenn jeder Schritt geklappt hat. Ist ein Schritt gescheitert, bleibt es offen und zeigt, welcher.
