@@ -5,6 +5,10 @@
 What changed in Blackbriar, newest version first.
 The first number changes with larger changes that need attention when updating, the middle one with new features, the last one with fixes.
 
+## bb.1.7.4 – 2026-10-23
+
+- Under "Coming up" the "Request" button and the status badges now sit at the bottom right of the tile. The title keeps the full width and is no longer cut off.
+
 ## bb.1.7.3 – 2026-10-22
 
 - After deleting, the window closes by itself two seconds later if every step worked. If a step failed, it stays open and shows which one.
