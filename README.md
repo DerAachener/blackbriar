@@ -12,9 +12,9 @@ Blackbriar tracks playback status, active watchlists, and requests across your u
 
 ## What Blackbriar does differently
 
-**Activity and intent over guesswork.** A title only lands on the safe-to-delete list when nobody is currently watching it, nobody has it saved on their watchlist, and the person who requested it via Seerr has finished it. You do not have to piece together complex rule sets for that.
+**Watching and watchlists come first.** A title only lands on the safe-to-delete list when nobody is currently watching it, nobody has it saved on their watchlist, and everyone who requested it via Seerr has watched it. You do not have to piece together complex rule sets for that.
 
-**Ratings as bonus context.** Plex stores ratings per user account, which tools like Tautulli do not show across all users. Blackbriar pulls them in so you can see if your users actually liked or disliked a title before purging it. It is handy context for edge cases, but pure watch status and watchlists always take priority.
+**Ratings are the icing on the cake.** Plex stores ratings per user account, which tools like Tautulli do not show across all users. Blackbriar reads them for everyone, so you can see whether your users liked a title before you delete it. By default a title also waits for a rating from those who rate. Turn ratings off for a user and watching alone counts as done for them.
 
 **Automatic reminders:** Users with inactive items lingering on their watchlist can get an automated email reminder so they either watch it or release it.
 
@@ -29,7 +29,7 @@ Blackbriar is made for servers with a few users and limited disk space. If you c
 - Server statistics per user, weekday, hour, device, and playback type
 
 ### Clean up
-- **Cleanup:** titles that are safe to delete because they are on nobody's watchlist, nobody is currently watching them, and everyone who requested them has finished them
+- **Cleanup:** titles that are safe to delete because they are on nobody's watchlist, nobody is currently watching them, and everyone who requested them has watched them (and rated them, unless ratings are turned off for that user)
 - Delete directly from Blackbriar, coordinated with Radarr, Sonarr, and Seerr, for entire titles or just watched episodes. Deleting is completely disabled until you explicitly turn it on in the settings
 - Library overview with file size, codec, resolution, and bitrate, filtered by Plex library
 - Free disk space with an estimate of how long your current storage will last based on library growth
@@ -38,7 +38,7 @@ Blackbriar is made for servers with a few users and limited disk space. If you c
 
 ![Cleanup: titles that are safe to delete, with who requested, watched and rated them](docs/screenshots/cleanup.png)
 
-### Ratings (Secondary context)
+### Ratings (the extra)
 - Reads the ratings of all users on the server, not just the owner's
 - Lists what someone has finished but not rated yet (for those who want feedback)
 - Optional Telegram notification when a user rates a title
