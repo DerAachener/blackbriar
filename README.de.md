@@ -41,6 +41,7 @@ Gedacht ist Blackbriar für Server mit ein paar Benutzern und knappem Speicherpl
 - Bibliothek mit Größe, Codec, Auflösung und Bitrate, gefiltert nach Plex-Mediathek
 - Freier Speicherplatz mit einer Schätzung, wie lange er reicht
 - Hinweise zu Serien: Staffel komplett, aber in Sonarr noch beobachtet, oder Folgen einer Staffel von verschiedenen Release-Gruppen
+- Hinweise zu Filmen und Folgen, die in derselben Qualität doppelt in einem Ordner liegen, etwa nach dem Umwandeln; die alte Datei lässt sich direkt löschen
 - Ein Hinweis, wenn Plex einen Titel falsch zugeordnet hat und Seerr ihn deshalb immer wieder anfragt
 
 ![Kann weg: Titel inklusive Übersicht, wer sie angefragt, gesehen und bewertet hat](docs/screenshots/cleanup.png)

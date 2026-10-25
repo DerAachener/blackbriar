@@ -127,9 +127,9 @@ const en: Record<string, string> = {
   'Alle Updates': 'All updates',
   'Alle Updates anzeigen': 'Show all updates',
   Verstanden: 'Got it',
-  'Filme: mehrere Dateien': 'Movies: several files',
-  'Liegen zwei Dateien eines Films im selben Ordner, ist meist eine alt, etwa nach dem Umwandeln; 4K und 1080p zählen getrennt. Nach dem Löschen liest Radarr den Film neu ein und übernimmt die verbliebene Datei. Liegen sie in verschiedenen Ordnern, hat Plex zwei Filme zusammengelegt.':
-    'If two files of a movie are in the same folder, one is usually old, for example after converting; 4K and 1080p count separately. After deleting, Radarr rescans the movie and takes over the remaining file. If they are in different folders, Plex has merged two movies.',
+  'Filme und Folgen: mehrere Dateien': 'Movies and episodes: several files',
+  'Liegen zwei Dateien eines Films oder einer Folge im selben Ordner, ist meist eine alt, etwa nach dem Umwandeln; 4K und 1080p zählen getrennt. Nach dem Löschen liest Radarr bzw. Sonarr den Titel neu ein und übernimmt die verbliebene Datei. Liegen die Dateien eines Films in verschiedenen Ordnern, hat Plex zwei Filme zusammengelegt.':
+    'If two files of a movie or an episode are in the same folder, one is usually old, for example after converting; 4K and 1080p count separately. After deleting, Radarr or Sonarr rescans the title and takes over the remaining file. If the files of a movie are in different folders, Plex has merged two movies.',
   'In Plex beim Film auf „…“ → „Aufteilen“ klicken. Danach beim falsch erkannten Eintrag „Zuordnung korrigieren“ wählen. Der Hinweis verschwindet beim nächsten Abgleich.':
     'In Plex, click "…" → "Split Apart" on the movie. Then choose "Fix Match" on the entry that was matched wrongly. The notice disappears at the next sync.',
   'Ordner: {name}': 'Folder: {name}',
@@ -350,8 +350,8 @@ const en: Record<string, string> = {
   'noch auf der Merkliste steht': 'is still on the watchlist',
   'nach {days} Tagen, höchstens {max}×, um {hour} Uhr': 'after {days} days, at most {max}×, at {hour}:00',
   '{open} offen, {due} fällig': '{open} open, {due} due',
-  'Offen sind {open} Titel, davon würden jetzt {due} angemahnt. Fällt die Erinnerung auf einen Tag mit Newsletter, steht sie mit in dessen Mail.':
-    '{open} titles are open, {due} of them would be reminded now. If the reminder falls on a newsletter day, it is included in that email.',
+  'Offen sind {open} Titel ({unrated} ohne Bewertung, {listed} noch auf der Merkliste), davon würden jetzt {due} angemahnt. Fällt die Erinnerung auf einen Tag mit Newsletter, steht sie mit in dessen Mail.':
+    '{open} titles are open ({unrated} without a rating, {listed} still on the watchlist), {due} of them would be reminded now. If the reminder falls on a newsletter day, it is included in that email.',
   'Gilt für alle, bei denen unten „Standard“ steht, und für jeden neuen Benutzer. Erinnert wird an Titel, die jemand zu Ende gesehen hat: Filme, sobald sie im Verlauf stehen, Serien, wenn alle vorhandenen Folgen gesehen sind.':
     'Applies to everyone marked “default” below and to every new user. Reminders cover titles someone has finished: movies once they appear in the history, series when all available episodes have been watched.',
   'Die Erinnerung jetzt an {name} ({email}) schicken?': 'Send the reminder to {name} ({email}) now?',

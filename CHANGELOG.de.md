@@ -5,6 +5,11 @@
 Was sich in Blackbriar geändert hat, neueste Fassung zuerst.
 Die erste Zahl ändert sich bei größeren Umbauten, auf die man beim Update achten muss, die mittlere bei neuen Funktionen, die letzte bei Korrekturen.
 
+## bb.1.8.0 – 25.10.2026
+
+- „Im Blick behalten“ meldet jetzt auch Folgen, die doppelt vorliegen. Liegen zwei Dateien einer Folge im selben Ordner in derselben Qualität (4K und 1080p zählen getrennt), gibt es je Staffel einen Hinweis mit den Dateien nebeneinander. Die alte Datei lässt sich dort löschen; die letzte bleibt immer, und Sonarr liest die Serie danach neu ein. Dateien in verschiedenen Ordnern lösen keinen Hinweis aus, weil das oft Absicht ist, etwa eine zweite Sonarr-Instanz für 4K.
+- Die Erinnerungs-Karte eines Benutzers sagt jetzt, wie sich die offenen Titel zusammensetzen: ohne Bewertung und noch auf der Merkliste.
+
 ## bb.1.7.6 – 23.10.2026
 
 - README: Ansehen und Merklisten stehen vorn, Bewertungen sind als Extra beschrieben. Der Text sagt weiter, dass ein Titel standardmäßig auf eine Bewertung wartet und dass sich Bewertungen pro Benutzer abschalten lassen. Die deutsche README stimmt damit überein.
