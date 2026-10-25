@@ -5,6 +5,13 @@
 What changed in Blackbriar, newest version first.
 The first number changes with larger changes that need attention when updating, the middle one with new features, the last one with fixes.
 
+## bb.1.9.0 – 2026-10-26
+
+- New tab "Welcome" in the settings: a guide for new and existing users. One button per user sends a welcome email with a personal link. Behind it is a page that shows one step at a time and moves on only after "OK, done". The server keeps count, so nothing can be skipped. The last step can hold the rules.
+- The steps and the text in the email are yours: every line `## Heading` starts a step, `- ` makes a list, `**bold**` and links work, `{name}`, `{server}` and `{app}` are filled in. Without your own text, a general example applies.
+- On each user you see how far they are and when they finished; you get a message when someone finishes. A reset starts a user over.
+- Needs the mailbox and the "External" address, as the links in the other emails do.
+
 ## bb.1.8.0 – 2026-10-25
 
 - "Keep an eye on" now also notices episodes that exist twice. If two files of an episode lie in the same folder in the same quality (4K and 1080p count separately), there is one notice per season with the files side by side. The old file can be deleted right there; the last file always stays, and Sonarr rescans the series afterwards. Files in different folders get no notice, since that is often intended, for example a second Sonarr instance for 4K.

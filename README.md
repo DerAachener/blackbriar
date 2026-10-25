@@ -52,6 +52,7 @@ Blackbriar is made for servers with a few users and limited disk space. If you c
 - Every user only sees titles from the libraries shared with them
 - Every email links to a page with summary, cast, and trailer, plus an unsubscribe link
 - Notifications can be set as a global default or customized per user
+- **Welcome guide** for new and existing users: one email with a personal link, behind it a page that shows one step at a time and moves on only after "OK, done". Your own steps and rules live in the settings, not in the code. You see who is how far
 
 <img src="docs/screenshots/newsletter.png" alt="Newsletter with new movies, series and recent ratings" width="420">
 

@@ -177,6 +177,14 @@ export function posterUrl(ratingKey: number): string | null {
 
 export const validTitle = (ratingKey: number, token: string): boolean => same(hmac(`title:${ratingKey}`, 24), token)
 
+/** Adresse der Einrichtungs-Anleitung eines Benutzers; ohne Anmeldung erreichbar, aber nur mit der passenden Unterschrift. */
+export function welcomeUrl(userId: number): string | null {
+  if (!config.publicUrl) return null
+  return `${config.publicUrl}/api/public/welcome?u=${userId}&t=${hmac(`welcome:${userId}`, 40)}`
+}
+
+export const validWelcome = (userId: number, token: string): boolean => same(hmac(`welcome:${userId}`, 40), token)
+
 const unsubColumn = (kind: MailKind) => (kind === 'newsletter' ? 'newsletter_unsub' : 'reminder_unsub')
 
 export function unsubscribe(userId: number, kind: MailKind): void {
@@ -219,7 +227,7 @@ export function lastSlot(prefs: MailPrefs, at = new Date()): number {
 // ---------------------------------------------------------------------------
 
 /** Hält fest, was verschickt wurde oder woran es scheiterte. */
-export function logMail(userId: number, kind: MailKind, subject: string, error?: string): void {
+export function logMail(userId: number, kind: MailKind | 'welcome', subject: string, error?: string): void {
   db.prepare('INSERT INTO mail_log (at, user_id, kind, subject, ok, error) VALUES (?, ?, ?, ?, ?, ?)').run(now(), userId, kind, subject, error ? 0 : 1, error ?? null)
   const recipient = String(db.prepare('SELECT name FROM users WHERE id = ?').get(userId)?.name ?? userId)
   if (error) logEvent('mail', t('Mail an {name} nicht verschickt: {subject} ({error})', { name: recipient, subject, error }), 'error')
@@ -232,7 +240,7 @@ ${error}`)
   }
 }
 
-export function mailLog(kind: MailKind): Record<string, unknown>[] {
+export function mailLog(kind: MailKind | 'welcome'): Record<string, unknown>[] {
   return db
     .prepare(
       'SELECT l.at, l.kind, l.subject, l.ok, l.error, u.name AS user_name FROM mail_log l LEFT JOIN users u ON u.id = l.user_id WHERE l.kind = ? ORDER BY l.id DESC LIMIT 40',

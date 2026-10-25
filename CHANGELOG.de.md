@@ -5,6 +5,13 @@
 Was sich in Blackbriar geändert hat, neueste Fassung zuerst.
 Die erste Zahl ändert sich bei größeren Umbauten, auf die man beim Update achten muss, die mittlere bei neuen Funktionen, die letzte bei Korrekturen.
 
+## bb.1.9.0 – 26.10.2026
+
+- Neuer Reiter „Willkommen“ in den Einstellungen: eine Anleitung für neue und bestehende Benutzer. Ein Knopf je Benutzer schickt eine Willkommens-Mail mit persönlichem Link. Dahinter zeigt eine Seite einen Schritt nach dem anderen und geht erst nach „OK, erledigt“ weiter. Den Stand zählt der Server mit, übersprungen wird nichts. Im letzten Schritt können die Regeln stehen.
+- Die Schritte und der Text der Mail gehören dir: Jede Zeile `## Überschrift` beginnt einen Schritt, `- ` macht eine Aufzählung, `**fett**` und Links gehen, `{name}`, `{server}` und `{app}` werden eingesetzt. Ohne eigenen Text gilt ein allgemeines Beispiel.
+- Bei jedem Benutzer siehst du, wie weit er ist und wann er fertig wurde; wer fertig wird, meldet sich bei dir. Mit „Zurücksetzen“ beginnt ein Benutzer von vorn.
+- Voraussetzung wie bei den Links der anderen Mails: das Mail-Postfach und die Adresse „Von außen“.
+
 ## bb.1.8.0 – 25.10.2026
 
 - „Im Blick behalten“ meldet jetzt auch Folgen, die doppelt vorliegen. Liegen zwei Dateien einer Folge im selben Ordner in derselben Qualität (4K und 1080p zählen getrennt), gibt es je Staffel einen Hinweis mit den Dateien nebeneinander. Die alte Datei lässt sich dort löschen; die letzte bleibt immer, und Sonarr liest die Serie danach neu ein. Dateien in verschiedenen Ordnern lösen keinen Hinweis aus, weil das oft Absicht ist, etwa eine zweite Sonarr-Instanz für 4K.

@@ -7,6 +7,7 @@ import { Field } from './login'
 import { ChangelogAll } from './changelog'
 import { SharingDialog } from './sharing'
 import { NewsletterSettings, ReminderSettings } from './newsletter'
+import { WelcomeSettings } from './welcome'
 import { ago, Badge, Button, Card, ErrorNote, fmtDate, fmtSize, meta, num, PROJECT_URL } from './ui'
 import { Heading } from './views'
 
@@ -1105,12 +1106,13 @@ function StatusPanel({ status }: { status?: Status }) {
 
 // Reihenfolge wie bei einer frischen Einrichtung: erst Plex, dann was Wünsche und Downloads verwaltet,
 // dann die Quelle für die Vergangenheit, zum Schluss Benachrichtigungen und Feinheiten
-const TABS = ['plex', 'seerr', 'radarr', 'sonarr', 'tmdb', 'tautulli', 'telegram', 'mail', 'newsletter', 'reminder', 'library', 'general', 'status', 'log'] as const
+const TABS = ['plex', 'seerr', 'radarr', 'sonarr', 'tmdb', 'tautulli', 'telegram', 'mail', 'newsletter', 'reminder', 'welcome', 'library', 'general', 'status', 'log'] as const
 type TabId = (typeof TABS)[number]
 type ServiceTab = Extract<TabId, ServiceId>
 const EXTRA_LABELS: Record<Exclude<TabId, ServiceId>, string> = {
   newsletter: mark('Newsletter'),
   reminder: mark('Erinnerung'),
+  welcome: mark('Willkommen'),
   library: mark('Bibliothek'),
   general: mark('Allgemein'),
   status: mark('Status'),
@@ -1290,6 +1292,7 @@ export function SettingsView() {
       {tab === 'mail' && <MailExtras />}
       {tab === 'newsletter' && <NewsletterSettings />}
       {tab === 'reminder' && <ReminderSettings />}
+      {tab === 'welcome' && <WelcomeSettings />}
       {tab === 'library' && formProps && <LibrarySettings {...formProps} />}
       {tab === 'general' && formProps && <GeneralSettings {...formProps} />}
       {tab === 'general' && <AccountSettings />}
