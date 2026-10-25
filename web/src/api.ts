@@ -160,7 +160,7 @@ export interface MailPrefsData {
     /** Für welche Teile der Benutzer eigene Einstellungen hat statt des Standards */
     own: { newsletter: boolean; reminder: boolean }
     /** Titel, die bei ihm offen sind, und wie viele davon jetzt angemahnt würden */
-    reminders: { open: number; due: number }
+    reminders: { open: number; due: number; unrated: number; listed: number }
     newsletter_unsub: number | null
     reminder_unsub: number | null
     newsletter_sent_at: number | null
@@ -183,9 +183,17 @@ export interface NoticeVersion {
   folder: string
 }
 
+export interface NoticeEpisode {
+  rating_key: number
+  season: number | null
+  episode: number | null
+  title: string | null
+  versions: NoticeVersion[]
+}
+
 export interface Notice {
   id: number
-  kind: 'complete' | 'groups' | 'versions' | 'merged'
+  kind: 'complete' | 'groups' | 'versions' | 'merged' | 'episodes'
   rating_key: number
   season: number
   title: string
@@ -194,6 +202,8 @@ export interface Notice {
   thumb: string | null
   url: string | null
   versions?: NoticeVersion[]
+  /** Nur bei doppelten Folgen: die Folgen mit ihren Dateien */
+  episodes?: NoticeEpisode[]
   canDelete?: boolean
 }
 

@@ -34,6 +34,7 @@ Blackbriar is made for servers with a few users and limited disk space. If you c
 - Library overview with file size, codec, resolution, and bitrate, filtered by Plex library
 - Free disk space with an estimate of how long your current storage will last based on library growth
 - TV show notices: completed seasons still marked as monitored in Sonarr, or mixed release groups within the same season
+- Notices for movies and episodes that exist twice in the same quality in one folder, for example after converting; the old file can be deleted right there
 - Alerts when Plex has matched a title to the wrong entry, which causes Seerr to request it repeatedly
 
 ![Cleanup: titles that are safe to delete, with who requested, watched and rated them](docs/screenshots/cleanup.png)

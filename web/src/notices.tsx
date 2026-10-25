@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Copy, EyeOff, ExternalLink, FolderTree, PackageCheck, Shuffle, Trash2 } from 'lucide-react'
 import { api, useApi, type Notice, type NoticeVersion } from './api'
 import { t } from './i18n'
-import { fileResolution, fmtSize, meta, Poster } from './ui'
+import { episodeCode, fileResolution, fmtSize, meta, Poster } from './ui'
 
 /** Hinweise zu Serien: Staffel komplett oder Folgen von verschiedenen Release-Gruppen; erscheint nur, wenn es welche gibt. */
 export function SeasonNotices() {
@@ -141,10 +141,25 @@ function VersionLine({ v, showFolder }: { v: NoticeVersion; showFolder?: boolean
   )
 }
 
-/** Filme mit mehr als einer Datei in derselben Fassung, etwa nach dem Umwandeln; die alte lässt sich hier löschen. */
+/** Der Knopf, der eine Datei löscht; bei einer umgewandelten ist er zurückhaltender. */
+function DeleteVersion({ n, v, busy, onRemove, label }: { n: Notice; v: NoticeVersion; busy: boolean; onRemove: (n: Notice, v: NoticeVersion, label?: string) => void; label?: string }) {
+  return (
+    <button
+      onClick={() => onRemove(n, v, label)}
+      disabled={busy}
+      title={t('Diese Version löschen')}
+      aria-label={t('Diese Version löschen')}
+      className={`shrink-0 rounded-md p-1.5 transition disabled:opacity-50 ${v.converted ? 'text-zinc-600 hover:bg-zinc-800 hover:text-zinc-300' : 'text-red-300 hover:bg-red-500/15'}`}
+    >
+      <Trash2 size={15} />
+    </button>
+  )
+}
+
+/** Filme und Folgen mit mehr als einer Datei in derselben Fassung, etwa nach dem Umwandeln; die alte lässt sich hier löschen. */
 export function VersionNotices() {
   const { data: all, reload } = useApi<Notice[]>('/notices', 300_000)
-  const data = all?.filter((n) => n.kind === 'versions' || n.kind === 'merged')
+  const data = all?.filter((n) => n.kind === 'versions' || n.kind === 'merged' || n.kind === 'episodes')
   const [busy, setBusy] = useState<number | null>(null)
   const [message, setMessage] = useState<{ text: string; ok: boolean }>()
   // Wie bei den Serien: zunächst drei, der Rest lässt sich aufklappen
@@ -160,8 +175,8 @@ export function VersionNotices() {
       reload()
     })
   }
-  const remove = (n: Notice, v: NoticeVersion) => {
-    if (!confirm(t('„{file}“ aus „{title}“ löschen? Die Datei wird in Plex endgültig gelöscht, die andere Version bleibt.', { file: v.file, title: n.title }))) return
+  const remove = (n: Notice, v: NoticeVersion, label?: string) => {
+    if (!confirm(t('„{file}“ aus „{title}“ löschen? Die Datei wird in Plex endgültig gelöscht, die andere Version bleibt.', { file: v.file, title: [n.title, label].filter(Boolean).join(' ') }))) return
     setBusy(n.id)
     setMessage(undefined)
     api<{ message: string }>(`/notices/${n.id}/delete-version`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ mediaId: v.media_id }) })
@@ -176,10 +191,10 @@ export function VersionNotices() {
   return (
     <section className="space-y-3 rounded-xl border border-violet-400/30 bg-violet-400/5 p-4">
       <div className="space-y-1">
-        <p className="font-medium text-violet-200">{t('Filme: mehrere Dateien')}</p>
+        <p className="font-medium text-violet-200">{t('Filme und Folgen: mehrere Dateien')}</p>
         <p className="text-sm text-zinc-400">
           {t(
-            'Liegen zwei Dateien eines Films im selben Ordner, ist meist eine alt, etwa nach dem Umwandeln; 4K und 1080p zählen getrennt. Nach dem Löschen liest Radarr den Film neu ein und übernimmt die verbliebene Datei. Liegen sie in verschiedenen Ordnern, hat Plex zwei Filme zusammengelegt.',
+            'Liegen zwei Dateien eines Films oder einer Folge im selben Ordner, ist meist eine alt, etwa nach dem Umwandeln; 4K und 1080p zählen getrennt. Nach dem Löschen liest Radarr bzw. Sonarr den Titel neu ein und übernimmt die verbliebene Datei. Liegen die Dateien eines Films in verschiedenen Ordnern, hat Plex zwei Filme zusammengelegt.',
           )}
         </p>
         {message && <p className={`text-sm ${message.ok ? 'text-emerald-300' : 'text-red-300'}`}>{message.text}</p>}
@@ -201,29 +216,33 @@ export function VersionNotices() {
                   </p>
                 </div>
               )}
+              {n.kind === 'episodes' && <p className="text-xs text-zinc-500">{t('Staffel {n}', { n: n.season })}</p>}
               <ul className="space-y-1.5">
                 {n.versions?.map((v) => (
                   <li key={v.media_id} className="flex items-start justify-between gap-3">
                     <VersionLine v={v} showFolder={n.kind === 'merged'} />
-                    {n.canDelete && (
-                      <button
-                        onClick={() => remove(n, v)}
-                        disabled={busy === n.id}
-                        title={t('Diese Version löschen')}
-                        aria-label={t('Diese Version löschen')}
-                        className={`shrink-0 rounded-md p-1.5 transition disabled:opacity-50 ${v.converted ? 'text-zinc-600 hover:bg-zinc-800 hover:text-zinc-300' : 'text-red-300 hover:bg-red-500/15'}`}
-                      >
-                        <Trash2 size={15} />
-                      </button>
-                    )}
+                    {n.canDelete && <DeleteVersion n={n} v={v} busy={busy === n.id} onRemove={remove} />}
                   </li>
                 ))}
               </ul>
-              {n.kind === 'versions' && !n.canDelete && <p className="text-xs text-zinc-500">{t('Löschen ist in den Einstellungen unter Bibliothek ausgeschaltet; die alte Version kannst du dann in Plex löschen.')}</p>}
+              {n.episodes?.map((e) => (
+                <div key={e.rating_key} className="space-y-1.5">
+                  <p className="text-zinc-300">{meta(episodeCode(e.season, e.episode), e.title ?? '')}</p>
+                  <ul className="space-y-1.5">
+                    {e.versions.map((v) => (
+                      <li key={v.media_id} className="flex items-start justify-between gap-3">
+                        <VersionLine v={v} />
+                        {n.canDelete && <DeleteVersion n={n} v={v} busy={busy === n.id} onRemove={remove} label={episodeCode(e.season, e.episode)} />}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+              {(n.kind === 'versions' || n.kind === 'episodes') && !n.canDelete && <p className="text-xs text-zinc-500">{t('Löschen ist in den Einstellungen unter Bibliothek ausgeschaltet; die alte Version kannst du dann in Plex löschen.')}</p>}
             </div>
             <div className="flex shrink-0 items-center gap-1">
               {n.url && (
-                <a href={n.url} target="_blank" rel="noreferrer" title={t('In Radarr öffnen')} aria-label={t('In Radarr öffnen')} className="rounded-md p-2 text-zinc-500 transition hover:bg-zinc-800 hover:text-zinc-300">
+                <a href={n.url} target="_blank" rel="noreferrer" title={n.kind === 'episodes' ? t('In Sonarr öffnen') : t('In Radarr öffnen')} aria-label={n.kind === 'episodes' ? t('In Sonarr öffnen') : t('In Radarr öffnen')} className="rounded-md p-2 text-zinc-500 transition hover:bg-zinc-800 hover:text-zinc-300">
                   <ExternalLink size={16} />
                 </a>
               )}

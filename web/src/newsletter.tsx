@@ -198,8 +198,10 @@ const KINDS: Record<Kind, KindConfig> = {
     unsub: (u) => u.reminder_unsub,
     extra: (u) => t('{open} offen, {due} fällig', { open: u.reminders.open, due: u.reminders.due }),
     hint: (u) =>
-      t('Offen sind {open} Titel, davon würden jetzt {due} angemahnt. Fällt die Erinnerung auf einen Tag mit Newsletter, steht sie mit in dessen Mail.', {
+      t('Offen sind {open} Titel ({unrated} ohne Bewertung, {listed} noch auf der Merkliste), davon würden jetzt {due} angemahnt. Fällt die Erinnerung auf einen Tag mit Newsletter, steht sie mit in dessen Mail.', {
         open: u.reminders.open,
+        unrated: u.reminders.unrated,
+        listed: u.reminders.listed,
         due: u.reminders.due,
       }),
     texts: {

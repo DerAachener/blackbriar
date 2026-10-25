@@ -11,6 +11,7 @@ import { getSeasonPlan, type SeasonPlan } from './tmdb.ts'
 // Hinweise für den Besitzer zu Serien, die gerade Folgen bekommen:
 //  - Eine Staffel ist komplett und könnte in Sonarr auf „nicht beobachtet“.
 //  - Eine neue Folge stammt von einer anderen Release-Gruppe als der Rest der Staffel.
+//  - Eine Folge liegt in derselben Fassung doppelt vor (siehe „Doppelte Versionen“).
 // Jeder Hinweis bleibt offen, bis der Besitzer ihn erledigt oder ausblendet.
 
 db.exec(`CREATE TABLE IF NOT EXISTS notices (
@@ -36,12 +37,13 @@ if (!db.prepare('PRAGMA table_info(notices)').all().some((c) => c.name === 'data
   }
 }
 
-type NoticeData = { total: number } | { groups: [string, number[]][]; main: string | null; count: number } | { versions: number } | { folders: string[] }
+type NoticeData = { total: number } | { groups: [string, number[]][]; main: string | null; count: number } | { versions: number } | { folders: string[] } | { episodes: number }
 
 /** Der Satz zu einem Hinweis, in der gerade eingestellten Sprache. */
 function noticeText(data: NoticeData): string {
   if ('total' in data) return t('Alle {n} Folgen sind da. Soll die Staffel in Sonarr auf „nicht beobachtet“?', { n: data.total })
   if ('versions' in data) return t('{n} Versionen derselben Fassung liegen nebeneinander.', { n: data.versions })
+  if ('episodes' in data) return t(data.episodes === 1 ? 'Eine Folge liegt doppelt vor.' : '{n} Folgen liegen doppelt vor.', { n: data.episodes })
   if ('folders' in data) return t('Plex führt {n} Ordner als einen Film: {folders}.', { n: data.folders.length, folders: data.folders.join(', ') })
   const parts = data.groups.map(([group, episodes]) =>
     t(episodes.length === 1 ? 'Folge {episodes} ist von {group}' : 'Folgen {episodes} sind von {group}', { episodes: episodeList(episodes), group }),
@@ -237,6 +239,7 @@ interface VersionRow {
 /** Ordner einer Datei, so wie Plex den Pfad meldet (Windows oder Linux). */
 const folderOf = (file: string | null) => String(file ?? '').replace(/[\\/][^\\/]*$/, '')
 const folderName = (folder: string) => folder.split(/[\\/]/).pop() ?? folder
+const episodeCode = (season: number | null, episode: number | null) => (season == null || episode == null ? '' : `S${String(season).padStart(2, '0')}E${String(episode).padStart(2, '0')}`)
 
 interface FileGroup {
   rating_key: number
@@ -297,8 +300,53 @@ export function checkVersions(): void {
       }
     }
   }
-  for (const n of db.prepare("SELECT id, key FROM notices WHERE kind IN ('versions', 'merged') AND state = 'open'").all()) {
+  checkEpisodeVersions(live)
+  for (const n of db.prepare("SELECT id, key FROM notices WHERE kind IN ('versions', 'merged', 'episodes') AND state = 'open'").all()) {
     if (!live.has(String(n.key))) db.prepare("UPDATE notices SET state = 'done' WHERE id = ?").run(n.id)
+  }
+}
+
+/**
+ * Folgen, die in derselben Fassung (4K oder darunter) im selben Ordner mehr als einmal vorliegen, je Staffel zu einem Hinweis.
+ * Liegen sie in verschiedenen Ordnern, ist das meist Absicht, etwa eine zweite Sonarr-Instanz für 4K; dann gibt es keinen Hinweis.
+ */
+function checkEpisodeVersions(live: Set<string>): void {
+  const insert = db.prepare('INSERT OR IGNORE INTO notices (key, kind, rating_key, season, title, detail, data, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)')
+  const rows = db
+    .prepare(
+      `SELECT v.media_id, v.rating_key, v.file, v.size, v.video_codec, v.audio_codec, v.audio_channels, v.resolution, f.item_key, f.season, s.title, s.year
+       FROM media_versions v
+       JOIN media_files f ON f.rating_key = v.rating_key
+       JOIN library_items s ON s.rating_key = f.item_key AND s.type = 'show'
+       WHERE v.rating_key IN (SELECT rating_key FROM media_versions GROUP BY rating_key HAVING COUNT(*) > 1)
+       ORDER BY v.media_id`,
+    )
+    .all() as unknown as (VersionRow & { item_key: number; season: number | null; title: string; year: number | null })[]
+  // Staffel → Dateien, die zu einer doppelten Folge gehören
+  const seasons = new Map<string, { item_key: number; season: number; title: string; ids: number[]; episodes: Set<number> }>()
+  const groups = new Map<string, typeof rows>()
+  for (const r of rows) {
+    const id = `${r.rating_key}\n${folderOf(r.file)}\n${quality(r.resolution)}`
+    groups.set(id, [...(groups.get(id) ?? []), r])
+  }
+  for (const group of groups.values()) {
+    if (group.length < 2) continue
+    const first = group[0]!
+    const season = first.season ?? 0
+    const id = `${first.item_key}:${season}`
+    const entry = seasons.get(id) ?? { item_key: first.item_key, season, title: first.year ? `${first.title} (${first.year})` : first.title, ids: [], episodes: new Set<number>() }
+    entry.ids.push(...group.map((v) => v.media_id))
+    entry.episodes.add(first.rating_key)
+    seasons.set(id, entry)
+  }
+  for (const entry of seasons.values()) {
+    // Wie bei den Filmen steckt die Dateiliste im Schlüssel: Kommt eine Datei dazu, ist es ein neuer Hinweis
+    const key = `episodes:${entry.item_key}:${entry.season}:${entry.ids.sort((a, b) => a - b).join(',')}`
+    live.add(key)
+    const data: NoticeData = { episodes: entry.episodes.size }
+    if (insert.run(key, 'episodes', entry.item_key, entry.season, entry.title, noticeText(data), JSON.stringify(data), now()).changes) {
+      logEvent('sync', t('{title}: {n} Folgen doppelt', { title: entry.title, n: entry.episodes.size }))
+    }
   }
 }
 
@@ -310,37 +358,65 @@ function versionsOf(key: string): (NoticeVersion & { folder: string })[] {
   return ids
     .map((id) => select.get(id) as unknown as VersionRow | undefined)
     .filter((v): v is VersionRow => Boolean(v))
-    .map((v) => ({
-      media_id: v.media_id,
-      file: String(v.file ?? '').split(/[\\/]/).pop() ?? '',
-      folder: folderName(folderOf(v.file)),
-      size: v.size,
-      video_codec: v.video_codec,
-      audio_codec: v.audio_codec,
-      audio_channels: v.audio_channels,
-      resolution: v.resolution,
-      converted: Boolean(marker) && String(v.file ?? '').toLowerCase().includes(marker),
-    }))
+    .map((v) => describeVersion(v, marker))
+}
+
+function describeVersion(v: VersionRow, marker: string): NoticeVersion & { folder: string } {
+  return {
+    media_id: v.media_id,
+    file: String(v.file ?? '').split(/[\\/]/).pop() ?? '',
+    folder: folderName(folderOf(v.file)),
+    size: v.size,
+    video_codec: v.video_codec,
+    audio_codec: v.audio_codec,
+    audio_channels: v.audio_channels,
+    resolution: v.resolution,
+    converted: Boolean(marker) && String(v.file ?? '').toLowerCase().includes(marker),
+  }
+}
+
+/** Die doppelten Folgen eines Hinweises (die Dateinummern stehen im Schlüssel), je Folge mit ihren Dateien. */
+function episodesOf(key: string): NoticeEpisode[] {
+  const ids = (key.split(':').pop() ?? '').split(',').map(Number).filter(Boolean)
+  const marker = getSettings().convertedMarker.trim().toLowerCase()
+  const select = db.prepare(
+    `SELECT v.media_id, v.rating_key, v.file, v.size, v.video_codec, v.audio_codec, v.audio_channels, v.resolution, f.season, f.episode, f.title AS episode_title
+     FROM media_versions v LEFT JOIN media_files f ON f.rating_key = v.rating_key WHERE v.media_id = ?`,
+  )
+  const episodes = new Map<number, NoticeEpisode>()
+  for (const id of ids) {
+    const v = select.get(id) as unknown as (VersionRow & { season: number | null; episode: number | null; episode_title: string | null }) | undefined
+    if (!v) continue
+    const entry = episodes.get(v.rating_key) ?? { rating_key: v.rating_key, season: v.season, episode: v.episode, title: v.episode_title, versions: [] }
+    entry.versions.push(describeVersion(v, marker))
+    episodes.set(v.rating_key, entry)
+  }
+  return [...episodes.values()].sort((a, b) => (a.episode ?? 0) - (b.episode ?? 0))
 }
 
 /**
- * Löscht eine Version eines Films in Plex. Die letzte Version bleibt immer. Danach liest Radarr den Film neu ein,
- * damit es die verbliebene Datei übernimmt, statt den Film als fehlend zu führen und neu zu laden.
+ * Löscht eine Version eines Films oder einer Folge in Plex. Die letzte Version bleibt immer. Danach liest Radarr bzw. Sonarr
+ * den Titel neu ein, damit es die verbliebene Datei übernimmt, statt ihn als fehlend zu führen und neu zu laden.
  */
 export async function deleteVersion(noticeId: number, mediaId: number, user: string): Promise<string> {
   if (!getSettings().allowDelete) throw new Error(t('Das Löschen ist in den Einstellungen nicht erlaubt.'))
-  const notice = db.prepare("SELECT key, rating_key, title FROM notices WHERE id = ? AND kind = 'versions' AND state = 'open'").get(noticeId)
+  const notice = db.prepare("SELECT key, kind, rating_key, title FROM notices WHERE id = ? AND kind IN ('versions', 'episodes') AND state = 'open'").get(noticeId)
   if (!notice) throw new Error(t('Diesen Hinweis gibt es nicht mehr.'))
-  const versions = versionsOf(String(notice.key))
-  const version = versions.find((v) => v.media_id === mediaId)
-  if (!version) throw new Error(t('Diese Version gibt es nicht mehr.'))
-  if (versions.length < 2) throw new Error(t('Die letzte Version bleibt.'))
-  // Zweite Sicherung: Dateien in verschiedenen Ordnern sind verschiedene Filme, keine Versionen
-  if (new Set(versions.map((v) => v.folder)).size > 1) throw new Error(t('Die Dateien liegen in verschiedenen Ordnern. Das sind verschiedene Filme; bitte in Plex aufteilen.'))
+  const isEpisodes = notice.kind === 'episodes'
   const ratingKey = notice.rating_key as number
-  const title = notice.title as string
+  // Je Datei die Nummer, unter der Plex die Folge bzw. den Film führt; „die letzte bleibt“ gilt je Folge
+  const all = isEpisodes
+    ? episodesOf(String(notice.key)).flatMap((e) => e.versions.map((v) => ({ ...v, owner: e.rating_key, label: episodeCode(e.season, e.episode) })))
+    : versionsOf(String(notice.key)).map((v) => ({ ...v, owner: ratingKey, label: '' }))
+  const version = all.find((v) => v.media_id === mediaId)
+  if (!version) throw new Error(t('Diese Version gibt es nicht mehr.'))
+  const same = all.filter((v) => v.owner === version.owner)
+  if (same.length < 2) throw new Error(t('Die letzte Version bleibt.'))
+  // Zweite Sicherung: Dateien in verschiedenen Ordnern sind verschiedene Filme, keine Versionen
+  if (new Set(same.map((v) => v.folder)).size > 1) throw new Error(t('Die Dateien liegen in verschiedenen Ordnern. Das sind verschiedene Filme; bitte in Plex aufteilen.'))
+  const title = [notice.title as string, version.label].filter(Boolean).join(' ')
   try {
-    await plexDelete(`/library/metadata/${ratingKey}/media/${mediaId}`)
+    await plexDelete(`/library/metadata/${version.owner}/media/${mediaId}`)
   } catch (err) {
     logEvent('delete', `${title} · ${version.file} · ${user}: ${(err as Error).message}`, 'error')
     throw err
@@ -348,10 +424,10 @@ export async function deleteVersion(noticeId: number, mediaId: number, user: str
   db.prepare('DELETE FROM media_versions WHERE media_id = ?').run(mediaId)
   const steps = [t('In Plex gelöscht: {file}', { file: version.file })]
   const item = fileList().find((f) => f.rating_key === ratingKey)
-  for (const entry of (item?.arr ?? []).filter((a) => arrInstance(a.instance)?.app === 'radarr')) {
+  for (const entry of (item?.arr ?? []).filter((a) => arrInstance(a.instance)?.app === (isEpisodes ? 'sonarr' : 'radarr'))) {
     try {
       await rescanArr(arrInstance(entry.instance)!, entry.id)
-      steps.push(t('{name} liest den Film neu ein', { name: entry.name }))
+      steps.push(t(isEpisodes ? '{name} liest die Serie neu ein' : '{name} liest den Film neu ein', { name: entry.name }))
     } catch (err) {
       steps.push(t('{name} nicht erreicht: {detail}', { name: entry.name, detail: (err as Error).message }))
     }
@@ -375,9 +451,17 @@ export interface NoticeVersion {
   folder: string
 }
 
+export interface NoticeEpisode {
+  rating_key: number
+  season: number | null
+  episode: number | null
+  title: string | null
+  versions: NoticeVersion[]
+}
+
 export interface Notice {
   id: number
-  kind: 'complete' | 'groups' | 'versions' | 'merged'
+  kind: 'complete' | 'groups' | 'versions' | 'merged' | 'episodes'
   rating_key: number
   season: number
   title: string
@@ -388,6 +472,8 @@ export interface Notice {
   url: string | null
   /** Nur bei doppelten Versionen: die Dateien, und ob das Löschen erlaubt ist */
   versions?: NoticeVersion[]
+  /** Nur bei doppelten Folgen: die Folgen mit ihren Dateien */
+  episodes?: NoticeEpisode[]
   canDelete?: boolean
 }
 
@@ -404,6 +490,7 @@ export function openNotices(): Notice[] {
       const detail = data ? noticeText(JSON.parse(data) as NoticeData) : rest.detail
       const base = { ...rest, detail, thumb: item?.thumb ?? null, url: entry ? arrLink(arrInstance(entry.instance)!, { slug }) : null }
       if (rest.kind === 'versions') return { ...base, versions: versionsOf(key), canDelete: getSettings().allowDelete }
+      if (rest.kind === 'episodes') return { ...base, episodes: episodesOf(key), canDelete: getSettings().allowDelete }
       if (rest.kind === 'merged') return { ...base, versions: versionsOf(key), canDelete: false }
       return base
     })

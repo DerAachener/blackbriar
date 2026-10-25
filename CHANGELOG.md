@@ -5,6 +5,11 @@
 What changed in Blackbriar, newest version first.
 The first number changes with larger changes that need attention when updating, the middle one with new features, the last one with fixes.
 
+## bb.1.8.0 – 2026-10-25
+
+- "Keep an eye on" now also notices episodes that exist twice. If two files of an episode lie in the same folder in the same quality (4K and 1080p count separately), there is one notice per season with the files side by side. The old file can be deleted right there; the last file always stays, and Sonarr rescans the series afterwards. Files in different folders get no notice, since that is often intended, for example a second Sonarr instance for 4K.
+- The reminder card of a user now says how the open titles add up: without a rating and still on the watchlist.
+
 ## bb.1.7.6 – 2026-10-23
 
 - README: watching and watchlists come first, ratings are described as the extra on top. The text still says that a title waits for a rating by default and that ratings can be turned off per user. The German README matches.

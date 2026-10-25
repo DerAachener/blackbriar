@@ -248,7 +248,9 @@ export async function maybeSendReminders(): Promise<void> {
 }
 
 /** Wie viele Titel bei einem Benutzer offen und wie viele davon jetzt fällig sind. */
-export function reminderCounts(userId: number): { open: number; due: number } {
+export function reminderCounts(userId: number): { open: number; due: number; unrated: number; listed: number } {
   const prefs = effectivePrefs(userId)
-  return { open: openReminders(userId, prefs).length, due: dueReminders(userId, prefs).length }
+  const open = openReminders(userId, prefs)
+  // Ein Titel kann beides sein: noch nicht bewertet und noch auf der Merkliste
+  return { open: open.length, due: dueReminders(userId, prefs).length, unrated: open.filter((i) => i.rate).length, listed: open.filter((i) => i.watchlist).length }
 }
