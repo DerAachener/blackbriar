@@ -296,6 +296,10 @@ addColumn('users', 'newsletter_unsub', 'INTEGER')
 addColumn('users', 'reminder_unsub', 'INTEGER')
 // Bis wann der Newsletter schon abgearbeitet ist; was danach dazukam, steht im nächsten
 addColumn('users', 'newsletter_sent_at', 'INTEGER')
+// Einrichtungs-Anleitung: bestätigte Schritte, wann die Willkommens-Mail ging und wann der letzte Schritt bestätigt wurde
+addColumn('users', 'welcome_step', 'INTEGER')
+addColumn('users', 'welcome_sent_at', 'INTEGER')
+addColumn('users', 'welcome_done_at', 'INTEGER')
 db.exec(`CREATE TABLE IF NOT EXISTS mail_log (
   id      INTEGER PRIMARY KEY AUTOINCREMENT,
   at      INTEGER NOT NULL,

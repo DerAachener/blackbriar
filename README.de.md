@@ -53,6 +53,7 @@ Gedacht ist Blackbriar für Server mit ein paar Benutzern und knappem Speicherpl
 - Jeder sieht nur Titel aus den Mediatheken, die für ihn freigegeben sind
 - Jede Mail führt zu einer Seite mit Inhalt, Besetzung und Trailer und trägt einen Link zum Abbestellen
 - Alles lässt sich als Standard für alle oder pro Benutzer einstellen
+- **Einrichtungs-Anleitung** für neue und bestehende Benutzer: eine Mail mit persönlichem Link, dahinter eine Seite, die einen Schritt nach dem anderen zeigt und erst nach „OK, erledigt“ weitergeht. Deine eigenen Schritte und Regeln stehen in den Einstellungen, nicht im Programm. Du siehst, wer wie weit ist
 
 <img src="docs/screenshots/newsletter.png" alt="Newsletter mit neuen Filmen, Serien und Bewertungen" width="420">
 

@@ -2,7 +2,7 @@ import type { FastifyInstance } from 'fastify'
 import { config, mailConfigured, tmdbConfigured } from './config.ts'
 import { db, getSettings } from './db.ts'
 import { locale, t } from './i18n.ts'
-import { briefingTone, inlineImages, MAIL_COLORS, mailHeadImage, sendMail, senderName, setBriefingTone, userEmail, userTestMail } from './mail.ts'
+import { briefingTone, inlineImages, MAIL_COLORS, mailHeadImage, sendMail, senderName, setBriefingTone, tone, userEmail, userTestMail } from './mail.ts'
 import { pms } from './plex.ts'
 import { posterImage, remotePosters, setRemotePosters } from './poster.ts'
 import { getDetails } from './tmdb.ts'
@@ -17,6 +17,7 @@ import {
   unsubscribe,
   validTitle,
   validUnsubscribe,
+  validWelcome,
   type MailKind,
 } from './mailprefs.ts'
 import { nextSlot } from './dashboard.ts'
@@ -24,15 +25,16 @@ import { logEvent } from './events.ts'
 import { previewNewsletter, sendNewsletter, sendNewsletterSample } from './newsletter.ts'
 import { previewReminder, reminderCounts, sendReminder } from './reminder.ts'
 import { escapeHtml } from './telegram.ts'
+import { confirmStep, markup, renderWelcome, resetWelcome, saveWelcome, sendWelcome, welcomeMailText, welcomeSteps, welcomeState, welcomeText, welcomeUsers, welcomeValues } from './welcome.ts'
 
 /** Eine schlichte Seite im Stil der Mails, für alles, was hinter einem Link aus einer Mail liegt. */
-function page(title: string, body: string): string {
+function page(title: string, body: string, width = 440): string {
   const c = MAIL_COLORS
   return `<!doctype html>
 <html lang="${locale().slice(0, 2)}">
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex"><title>${escapeHtml(title)}</title></head>
 <body style="margin:0;background:${c.page};color:${c.text};font-family:Arial,Helvetica,sans-serif">
-<div style="max-width:440px;margin:12vh auto 0;padding:28px 24px;background:${c.band};border-top:3px solid ${c.accent}">
+<div style="max-width:${width}px;margin:${width > 440 ? 6 : 12}vh auto 0;padding:28px 24px;background:${c.band};border-top:3px solid ${c.accent}">
 <div style="font-size:12px;letter-spacing:3px;color:${c.accent};text-transform:uppercase">${escapeHtml(senderName())}</div>
 <h1 style="font-size:20px;margin:8px 0 14px">${escapeHtml(title)}</h1>
 <div style="font-size:15px;line-height:1.6;color:${c.muted}">${body}</div>
@@ -189,6 +191,46 @@ const POSTER_LIMIT = 900
 // Schon gelieferte Poster, damit nicht jeder Aufruf Plex bemüht
 const POSTER_CACHE_MS = 6 * 3600_000
 const posterCache = new Map<number, { at: number; data: Buffer; type: string }>()
+
+/** Die Einrichtungs-Anleitung eines Benutzers: bestätigte Schritte zum Nachlesen, darüber der aktuelle mit dem Knopf. */
+async function welcomePage(userId: number, action: string): Promise<string> {
+  const c = MAIL_COLORS
+  const steps = welcomeSteps()
+  const values = await welcomeValues(userId)
+  const state = welcomeState(userId, steps.length)
+  const title = tone('Einrichtung für {name}', 'Einsatzbefehl für Agent {name}', { name: values.name })
+  const current = steps[state.step]
+  const percent = steps.length ? Math.round((state.step / steps.length) * 100) : 100
+  const bar = `<div style="height:4px;background:${c.card};margin:0 0 6px"><div style="width:${percent}%;height:4px;background:${c.accent}"></div></div>`
+  const progress = `<p style="margin:0 0 18px;font-size:12px">${escapeHtml(state.done ? t('Alle {n} Schritte erledigt', { n: steps.length }) : t('Schritt {n} von {total}', { n: state.step + 1, total: steps.length }))}</p>`
+  let body = bar + progress
+  if (current) {
+    body += `<h2 style="font-size:17px;color:${c.text};margin:0 0 10px">${escapeHtml(current.title)}</h2><div style="color:${c.text}">${markup(current.body, values)}</div>
+<form method="post" action="${escapeHtml(action)}" style="margin:18px 0 0">
+<input type="hidden" name="step" value="${state.step}">
+<button type="submit" style="background:${c.accent};color:${c.onAccent};border:0;font-size:15px;font-weight:bold;padding:11px 22px;border-radius:4px;cursor:pointer">${escapeHtml(t('OK, erledigt'))}</button>
+</form>`
+  } else {
+    body += `<p style="color:${c.text};font-size:16px;margin:0 0 6px">${escapeHtml(tone('Alles erledigt. Viel Spaß beim Schauen.', 'Einsatz bereit. Viel Erfolg, Agent.'))}</p>`
+  }
+  const finished = steps.slice(0, state.step)
+  if (finished.length) {
+    body += `<div style="margin:22px 0 0;border-top:1px solid ${c.card};padding-top:10px">${finished
+      .map((s) => `<details style="margin:6px 0"><summary style="cursor:pointer;color:${c.text}">&#10003; ${escapeHtml(s.title)}</summary><div style="margin:8px 0 4px 18px">${markup(s.body, values)}</div></details>`)
+      .join('')}</div>`
+  }
+  return page(title, body, 560)
+}
+
+/** Alle Schritte untereinander, ohne Knöpfe: so sieht der Besitzer die Anleitung, ohne in einen Benutzer einzugreifen. */
+async function welcomePreview(): Promise<string> {
+  const c = MAIL_COLORS
+  const values = { name: t('Name'), server: (await welcomeValues(0)).server, app: senderName() }
+  const body = welcomeSteps()
+    .map((s, i) => `<h2 style="font-size:17px;color:${c.text};margin:${i ? 22 : 0}px 0 8px">${i + 1}. ${escapeHtml(s.title)}</h2><div style="color:${c.text}">${markup(s.body, values)}</div>`)
+    .join('')
+  return page(t('Vorschau der Anleitung'), `<p style="margin:0 0 14px;font-size:12px">${escapeHtml(t('So sehen es die Benutzer, Schritt für Schritt. Hier siehst du alle Schritte auf einmal.'))}</p>${body}`, 560)
+}
 
 export function registerMailRoutes(app: FastifyInstance): void {
   // Die Seiten hinter den Links in den Mails sind ohne Anmeldung erreichbar. Ihre Schlüssel sind zu lang zum Erraten,
@@ -354,6 +396,89 @@ export function registerMailRoutes(app: FastifyInstance): void {
     if (posterCache.size > 400) posterCache.clear()
     posterCache.set(key, { at: Date.now(), ...img })
     return reply.header('content-type', img.type).header('cache-control', 'public, max-age=86400').send(img.data)
+  })
+
+  // Einrichtungs-Anleitung: die Seite hinter dem Link in der Willkommens-Mail
+  const welcomeTarget = (query: Record<string, string | undefined>): number | null => {
+    const userId = Number(query.u)
+    if (!Number.isInteger(userId) || !validWelcome(userId, String(query.t ?? ''))) return null
+    return db.prepare('SELECT 1 FROM users WHERE id = ? AND active = 1').get(userId) ? userId : null
+  }
+  const invalidWelcome = () => page(t('Link ungültig'), escapeHtml(t('Dieser Link ist nicht mehr gültig. Sag dem Betreiber Bescheid, dann bekommst du einen neuen.')))
+
+  app.get<{ Querystring: Record<string, string> }>('/api/public/welcome', async (req, reply) => {
+    reply.header('content-type', 'text/html; charset=utf-8').header('cache-control', 'no-store')
+    const userId = welcomeTarget(req.query)
+    if (userId == null) return reply.code(400).send(invalidWelcome())
+    return welcomePage(userId, req.url)
+  })
+
+  // Der Knopf „OK, erledigt“. Die Seite nennt den Schritt, den sie zeigt; nur der aktuelle zählt, sonst geschieht nichts.
+  app.post<{ Querystring: Record<string, string>; Body: string }>('/api/public/welcome', (req, reply) => {
+    const userId = welcomeTarget(req.query)
+    if (userId == null) return reply.code(400).header('content-type', 'text/html; charset=utf-8').send(invalidWelcome())
+    confirmStep(userId, Number(new URLSearchParams(String(req.body ?? '')).get('step')))
+    return reply.code(303).header('location', req.url).send()
+  })
+
+  // Einstellungen der Anleitung und der Willkommens-Mail
+  app.get('/api/welcome', () => {
+    const steps = welcomeText()
+    const mail = welcomeMailText()
+    return {
+      steps: steps.text,
+      stepsCustom: steps.custom,
+      mail: mail.text,
+      mailCustom: mail.custom,
+      canSend: { mail: mailConfigured(), url: Boolean(config.publicUrl) },
+      users: welcomeUsers(),
+      log: mailLog('welcome'),
+    }
+  })
+
+  app.put<{ Body: { steps?: unknown; mail?: unknown } }>('/api/welcome', (req, reply) => {
+    try {
+      saveWelcome(req.body ?? {})
+    } catch (err) {
+      return reply.code(400).send({ error: (err as Error).message })
+    }
+    logEvent('settings', t('Einrichtungs-Anleitung geändert'))
+    return { ok: true }
+  })
+
+  app.get('/api/welcome/preview', async (_req, reply) => {
+    reply.header('content-type', 'text/html; charset=utf-8')
+    return welcomePreview()
+  })
+
+  app.get<{ Params: { id: string } }>('/api/welcome/users/:id/preview', async (req, reply) => {
+    reply.header('content-type', 'text/html; charset=utf-8')
+    try {
+      const mail = await renderWelcome(Number(req.params.id))
+      return inlineImages(mail.html, mail.attachments ?? [])
+    } catch (err) {
+      return page(t('Vorschau nicht möglich'), escapeHtml((err as Error).message))
+    }
+  })
+
+  app.post<{ Params: { id: string } }>('/api/welcome/users/:id/send', async (req, reply) => {
+    const id = Number(req.params.id)
+    if (!db.prepare('SELECT 1 FROM users WHERE id = ? AND active = 1').get(id)) return reply.code(404).send({ error: t('Nicht gefunden') })
+    try {
+      await sendWelcome(id)
+    } catch (err) {
+      return reply.code(400).send({ error: (err as Error).message })
+    }
+    return { message: t('Willkommens-Mail verschickt.') }
+  })
+
+  app.post<{ Params: { id: string } }>('/api/welcome/users/:id/reset', (req, reply) => {
+    const id = Number(req.params.id)
+    const name = String(db.prepare('SELECT name FROM users WHERE id = ?').get(id)?.name ?? '')
+    if (!name) return reply.code(404).send({ error: t('Nicht gefunden') })
+    resetWelcome(id)
+    logEvent('settings', t('Einrichtung von {name} zurückgesetzt', { name }))
+    return { ok: true }
   })
 
   // Hinter dem Link in der Mail. Der Aufruf allein meldet nicht ab, weil Mailprogramme Links zur Prüfung vorab öffnen;

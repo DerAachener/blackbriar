@@ -738,3 +738,15 @@ export function usePaged<T>(path: string, pageSize = 50) {
   const current = state.path === path ? state : { items: [] as T[], total: 0 }
   return { items: current.items, total: current.total, error, more: () => load(current.items.length) }
 }
+
+export interface WelcomeData {
+  /** Der Text der Schritte, jede Zeile `## Überschrift` beginnt einen */
+  steps: string
+  stepsCustom: boolean
+  mail: string
+  mailCustom: boolean
+  /** Ob ein Postfach eingetragen ist und ob Blackbriar die Adresse „Von außen“ kennt */
+  canSend: { mail: boolean; url: boolean }
+  users: { id: number; name: string; email: string | null; step: number; total: number; sent_at: number | null; done: boolean; done_at: number | null }[]
+  log: { at: number; kind: string; subject: string; ok: number; error: string | null; user_name: string | null }[]
+}
